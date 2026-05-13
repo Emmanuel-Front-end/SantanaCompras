@@ -123,6 +123,32 @@
     .subtotal-cell { font-weight: bold; background: #f1f5f9; }
     .totals { text-align: right; margin-top: 1rem; border-top: 2px solid #e2e8f0; padding-top: 0.8rem; }
     .totals div { margin: 0.2rem 0; font-size: 1rem; }
+    /* Estilos para las nuevas líneas de maniobras y retención */
+    .extra-line {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 0.5rem;
+      margin: 0.2rem 0;
+    }
+    .extra-line input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      margin: 0;
+    }
+    .extra-line .extra-label {
+      font-weight: 500;
+      min-width: 80px;
+      text-align: left;
+    }
+    .extra-line .extra-amount {
+      width: 100px;
+      text-align: right;
+      padding: 0.2rem 0.4rem;
+      border: 1px solid #cbd5e1;
+      border-radius: 0.4rem;
+      font-size: 0.9rem;
+    }
     .auth-field { width: 280px; text-align: center; }
     .auth-field label { font-weight: 600; margin-bottom: 1rem; display: block; }
     .auth-field .firma-line { border-bottom: 1px solid #1e3c34; width: 100%; }
@@ -130,7 +156,7 @@
 
     /* ═══════════════════════════════════════════════
        IMPRESIÓN - LOGO SIN CUADRO NEGRO Y AUTORIZÓ ABAJO
-       y DATE más pequeño
+       y DATE más pequeño - solo mostrar extras seleccionadas
        ═══════════════════════════════════════════════ */
     @media print {
       body { background: white; padding: 0; }
@@ -210,6 +236,19 @@
         font-size: 9pt; text-align: right;
       }
 
+      /* Estilos para las extras en impresión: ocultar checkbox y mostrar solo el texto */
+      .extra-line input[type="checkbox"] {
+        display: none !important;
+      }
+      .extra-line .extra-amount {
+        border: none !important;
+        padding: 0 !important;
+        width: auto !important;
+        text-align: right;
+      }
+      /* Las líneas no seleccionadas se ocultarán mediante JS antes de imprimir,
+         pero también podemos dejarlas visibles? Mejor JS las oculta. */
+
       .modal.active .auth-section {
         border-top: 1px solid black; margin-top: 0.3cm; padding-top: 0.15cm;
       }
@@ -276,7 +315,7 @@
       </div>
     </div>
 
-    <h3 style="margin-top:1.5rem;">Productos / Servicios</h3>
+    <h3 style="margin-top:1.1rem;">Productos / Servicios</h3>
     <table class="items-table" id="itemsTable">
       <thead><tr><th>CÓDIGO</th><th>DESCRIPCIÓN</th><th>CANTIDAD</th><th>PRECIO UNIT</th><th>SUB-TOTAL</th><th></th></tr></thead>
       <tbody></tbody>
@@ -286,11 +325,24 @@
     <div class="totals">
       <div>SUB-TOTAL: $<span id="subtotalVal">0.00</span></div>
       <div>IVA (<span id="tasaIva">16</span>%): $<span id="ivaVal">0.00</span></div>
+      
+      <!-- NUEVAS FUNCIONES: MANIOBRAS Y RETENCIÓN -->
+      <div class="extra-line" id="maniobrasLine">
+        <input type="checkbox" id="enableManiobras">
+        <span class="extra-label">Maniobras:</span>
+        <input type="number" step="0.01" id="maniobrasAmount" class="extra-amount" value="12.00">
+      </div>
+      <div class="extra-line" id="retencionLine">
+        <input type="checkbox" id="enableRetencion">
+        <span class="extra-label">Retención:</span>
+        <input type="number" step="0.01" id="retencionAmount" class="extra-amount" value="18.77">
+      </div>
+      
       <div><strong>TOTAL: $<span id="totalVal">0.00</span></strong></div>
     </div>
 
     <div class="auth-section">
-      <div class="auth-field"><label>Autorizó</label><div class="firma-line"></div></div>
+      <div style="margin-top:5rem;"class="auth-field"><label>Autorizó</label><div class="firma-line"></div></div>
       <div class="auth-field"><label>Ing. Alfredo Dario Padilla Osuna</label></div>
     </div>
 
@@ -319,6 +371,12 @@
     let editIndex = null;
     let lineas = [];
 
+    // Variables para las nuevas funciones
+    let maniobrasActivo = false;
+    let retencionActivo = false;
+    let maniobrasValor = 12.00;
+    let retencionValor = 18.77;
+
     const ordersListContainer = document.getElementById('ordersListContainer');
     const modal = document.getElementById('ordenModal');
     const itemsTableBody = document.querySelector('#itemsTable tbody');
@@ -329,6 +387,14 @@
     const nuevaOrdenBtn = document.getElementById('nuevaOrdenBtn');
     const tasaIvaSpan = document.getElementById('tasaIva');
     tasaIvaSpan.textContent = (TASA_IVA * 100).toFixed(0);
+
+    // Referencias a los nuevos controles
+    const enableManiobrasChk = document.getElementById('enableManiobras');
+    const maniobrasAmountInput = document.getElementById('maniobrasAmount');
+    const enableRetencionChk = document.getElementById('enableRetencion');
+    const retencionAmountInput = document.getElementById('retencionAmount');
+    const maniobrasLine = document.getElementById('maniobrasLine');
+    const retencionLine = document.getElementById('retencionLine');
 
     const logoArea = document.getElementById('logoArea');
     let logoData = localStorage.getItem('santana_logo');
@@ -368,6 +434,51 @@
     }
     renderLogo();
 
+    // Función modificada para incluir maniobras y retención
+    function calcTotales() {
+      let sub = 0;
+      itemsTableBody.querySelectorAll('tr').forEach(fila => {
+        const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
+        const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
+        sub += c * p;
+      });
+      const iva = sub * TASA_IVA;
+      let total = sub + iva;
+      if (maniobrasActivo) total += maniobrasValor;
+      if (retencionActivo) total -= retencionValor;
+      document.getElementById('subtotalVal').textContent = sub.toFixed(2);
+      document.getElementById('ivaVal').textContent = iva.toFixed(2);
+      document.getElementById('totalVal').textContent = total.toFixed(2);
+    }
+
+    function actualizarSubtotal(fila) {
+      const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
+      const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
+      fila.querySelector('.subtotal-cell').textContent = (c * p).toFixed(2);
+      calcTotales();
+    }
+
+    // Eventos para las nuevas funciones
+    function bindExtraEvents() {
+      enableManiobrasChk.addEventListener('change', (e) => {
+        maniobrasActivo = e.target.checked;
+        calcTotales();
+      });
+      maniobrasAmountInput.addEventListener('input', (e) => {
+        maniobrasValor = parseFloat(e.target.value) || 0;
+        calcTotales();
+      });
+      enableRetencionChk.addEventListener('change', (e) => {
+        retencionActivo = e.target.checked;
+        calcTotales();
+      });
+      retencionAmountInput.addEventListener('input', (e) => {
+        retencionValor = parseFloat(e.target.value) || 0;
+        calcTotales();
+      });
+    }
+    bindExtraEvents();
+
     function parsePO(po) {
       const p = po.split('-');
       if(p.length === 2) return [parseInt(p[0])||0, parseInt(p[1])||0];
@@ -384,24 +495,6 @@
     function persistir() {
       ordenar();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(ordenes));
-    }
-
-    function calcTotales() {
-      let sub = 0;
-      itemsTableBody.querySelectorAll('tr').forEach(fila => {
-        const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
-        const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
-        sub += c * p;
-      });
-      const iva = sub * TASA_IVA;
-      document.getElementById('subtotalVal').textContent = sub.toFixed(2);
-      document.getElementById('ivaVal').textContent = iva.toFixed(2);
-      document.getElementById('totalVal').textContent = (sub + iva).toFixed(2);
-    }
-    function actualizarSubtotal(fila) {
-      const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
-      const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
-      fila.querySelector('.subtotal-cell').textContent = (c * p).toFixed(2);
     }
 
     itemsTableBody.addEventListener('input', e => {
@@ -452,6 +545,16 @@
       lineas = [];
       renderLineas();
       editIndex = null;
+      // Resetear las nuevas funciones
+      maniobrasActivo = false;
+      retencionActivo = false;
+      maniobrasValor = 12.00;
+      retencionValor = 18.77;
+      enableManiobrasChk.checked = false;
+      enableRetencionChk.checked = false;
+      maniobrasAmountInput.value = '12.00';
+      retencionAmountInput.value = '18.77';
+      calcTotales();
     }
     function obtenerOrden() {
       return {
@@ -481,7 +584,12 @@
         })),
         subtotal: parseFloat(document.getElementById('subtotalVal').textContent) || 0,
         iva: parseFloat(document.getElementById('ivaVal').textContent) || 0,
-        total: parseFloat(document.getElementById('totalVal').textContent) || 0
+        total: parseFloat(document.getElementById('totalVal').textContent) || 0,
+        // Guardar las nuevas funciones
+        maniobrasActivo: maniobrasActivo,
+        maniobrasValor: maniobrasValor,
+        retencionActivo: retencionActivo,
+        retencionValor: retencionValor
       };
     }
     function cargarEnForm(orden, idx) {
@@ -502,6 +610,16 @@
       document.getElementById('dirEntrega4').value = dir[3] || '';
       lineas = (orden.lineas || []).map(l => ({...l}));
       renderLineas();
+      // Cargar las nuevas funciones
+      maniobrasActivo = orden.maniobrasActivo === true;
+      retencionActivo = orden.retencionActivo === true;
+      maniobrasValor = orden.maniobrasValor !== undefined ? orden.maniobrasValor : 12.00;
+      retencionValor = orden.retencionValor !== undefined ? orden.retencionValor : 18.77;
+      enableManiobrasChk.checked = maniobrasActivo;
+      enableRetencionChk.checked = retencionActivo;
+      maniobrasAmountInput.value = maniobrasValor.toFixed(2);
+      retencionAmountInput.value = retencionValor.toFixed(2);
+      calcTotales();
       editIndex = idx;
     }
 
@@ -527,14 +645,39 @@
       resetForm();
     });
 
+    // Modificación del botón imprimir para ocultar líneas no seleccionadas antes de imprimir
     printBtn.addEventListener('click', () => {
+      // Guardar el estado original de visibilidad de cada extra-line
+      const lines = [maniobrasLine, retencionLine];
+      const originalDisplay = [];
+      lines.forEach(line => {
+        originalDisplay.push(line.style.display);
+        // Si el checkbox no está marcado, ocultamos la línea completa
+        const checkbox = line.querySelector('input[type="checkbox"]');
+        if (checkbox && !checkbox.checked) {
+          line.style.display = 'none';
+        } else {
+          line.style.display = ''; // Asegurar que se muestre
+        }
+      });
+
+      // Ajuste de fuente para la tabla si hay muchas líneas (código original)
       const lineasCount = itemsTableBody.querySelectorAll('tr').length;
       if (lineasCount > 8) {
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '7pt');
       } else if (lineasCount > 5) {
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '8pt');
       }
+
+      // Imprimir
       window.print();
+
+      // Restaurar visibilidad original
+      lines.forEach((line, idx) => {
+        line.style.display = originalDisplay[idx] || '';
+      });
+      // Restaurar tamaño de fuente de la tabla
+      document.querySelector('.modal.active .items-table')?.style.removeProperty('font-size');
     });
 
     function renderLista() {
@@ -563,6 +706,8 @@
               <div>
                 <div class="detail-block"><label>Facturación</label><span>${o.facturacion?.empresa||''} / ${o.facturacion?.rfc||''}</span></div>
                 <div class="detail-block"><label>Persona que recibe</label><span>${o.personaRecibe||'-'}</span></div>
+                ${o.maniobrasActivo ? `<div class="detail-block"><label>Maniobras</label><span>$${o.maniobrasValor?.toFixed(2) || '0.00'}</span></div>` : ''}
+                ${o.retencionActivo ? `<div class="detail-block"><label>Retención</label><span>$${o.retencionValor?.toFixed(2) || '0.00'}</span></div>` : ''}
               </div>
               <div>
                 <div class="detail-block"><label>Comentarios</label><span>${o.comentarios||'-'}</span></div>
