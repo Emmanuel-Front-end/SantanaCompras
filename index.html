@@ -8,54 +8,42 @@
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
       font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
-      background: #f4f5f7;
-      color: #1e293b;
-      padding: 2rem 1.5rem;
+      background: #f4f5f7; color: #1e293b; padding: 2rem 1.5rem;
     }
     .app-container { max-width: 1350px; margin: 0 auto; }
 
-    /* ── CABECERA ── */
+    /* ── CABECERA EN PANTALLA ── */
     .header {
-      background: #1e3c34;
-      color: white;
-      padding: 1rem 2rem;
-      border-radius: 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1.5rem;
+      background: #1e3c34; color: white; padding: 1rem 2rem;
+      border-radius: 1.5rem; display: flex; align-items: center;
+      justify-content: space-between; margin-bottom: 1.5rem;
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     }
-    .logo-area { display: flex; align-items: center; gap: 1rem; }
+    .logo-area { display: flex; align-items: center; gap: 1rem; cursor: pointer; }
     .logo-wrapper { position: relative; }
     .logo-img { height: 42px; width: auto; border-radius: 10px; object-fit: contain; background: white; padding: 3px; }
     .logo-placeholder {
       height: 42px; width: 42px; background: rgba(255,255,255,0.15);
       border-radius: 12px; display: flex; align-items: center; justify-content: center;
       font-size: 1.4rem; cursor: pointer; color: white; border: 1px dashed rgba(255,255,255,0.4);
-      transition: background 0.2s;
     }
     .logo-placeholder:hover { background: rgba(255,255,255,0.25); }
     .delete-logo-btn {
-      position: absolute; top: -7px; right: -7px;
-      background: #ef4444; color: white; border: none;
-      border-radius: 50%; width: 20px; height: 20px;
-      font-size: 10px; font-weight: bold;
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; opacity: 0; transition: opacity 0.2s;
+      position: absolute; top: -7px; right: -7px; background: #ef4444; color: white;
+      border: none; border-radius: 50%; width: 20px; height: 20px;
+      font-size: 10px; font-weight: bold; display: flex; align-items: center;
+      justify-content: center; cursor: pointer; opacity: 0; transition: opacity 0.2s;
     }
     .logo-wrapper:hover .delete-logo-btn { opacity: 1; }
 
     .btn {
       padding: 0.5rem 1.4rem; border: none; border-radius: 2rem;
       cursor: pointer; font-weight: 600; font-size: 0.85rem;
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      transition: all 0.2s;
+      display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.2s;
     }
     .btn-primary { background: #c9a84c; color: #1e3c34; box-shadow: 0 2px 8px rgba(201,168,76,0.3); }
-    .btn-primary:hover { background: #dbb84d; transform: translateY(-1px); }
+    .btn-primary:hover { background: #dbb84d; }
     .btn-success { background: #2d6a4f; color: white; }
-    .btn-success:hover { background: #24563f; }
     .btn-danger { background: #dc2626; color: white; }
     .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #374151; }
     .btn-outline:hover { background: #f1f5f9; }
@@ -68,17 +56,16 @@
       padding: 1.2rem 1.4rem; box-shadow: 0 1px 4px rgba(0,0,0,0.03);
       text-align: center; border-left: 4px solid #c9a84c;
     }
-    .kpi-label { font-size: 0.7rem; font-weight: 600; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+    .kpi-label { font-size: 0.7rem; font-weight: 600; color: #475569; text-transform: uppercase; }
     .kpi-value { font-size: 1.5rem; font-weight: 700; color: #1e3c34; margin-top: 0.3rem; }
 
-    /* ── TABLA EXPANDIBLE ── */
+    /* ── LISTA DE ÓRDENES ── */
     .orders-list { background: white; border-radius: 1.2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); overflow: hidden; }
     .order-item { border-bottom: 1px solid #f1f5f9; }
     .order-item:last-child { border-bottom: none; }
     .order-summary {
       display: grid; grid-template-columns: 1fr 2fr 1.5fr 1fr 40px;
-      align-items: center; padding: 1rem 1.5rem;
-      cursor: pointer; transition: background 0.15s;
+      align-items: center; padding: 1rem 1.5rem; cursor: pointer; transition: background 0.15s;
     }
     .order-summary:hover { background: #fafcfb; }
     .order-summary span { font-size: 0.9rem; }
@@ -95,21 +82,40 @@
     .detail-block span { font-size: 0.9rem; color: #1e293b; }
     .detail-actions { display: flex; gap: 0.5rem; margin-top: 1rem; justify-content: flex-end; }
 
-    /* ── MODAL ── */
-    .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100; }
+    /* ── MODAL (FORMULARIO) ── */
+    .modal {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.4); justify-content: center; align-items: center; z-index: 100;
+    }
     .modal.active { display: flex; }
     .modal-content {
       background: white; border-radius: 1.5rem; width: 95%; max-width: 1000px;
       max-height: 90vh; overflow-y: auto; padding: 2rem;
+      display: flex; flex-direction: column;
     }
-    .form-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #1e3c34; padding-bottom: 0.8rem; margin-bottom: 1.5rem; }
+    /* Fijar "Autorizó" al final del modal */
+    .auth-section {
+      margin-top: auto;
+      display: flex; flex-direction: column; align-items: center;
+      border-top: 2px solid #e2e8f0; padding-top: 1rem;
+    }
+    .form-header {
+      display: flex; justify-content: space-between; align-items: center;
+      border-bottom: 2px solid #1e3c34; padding-bottom: 0.8rem; margin-bottom: 1.5rem;
+    }
     .form-header h2 { font-size: 1.3rem; color: #1e3c34; }
     .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
     .field { margin-bottom: 0.8rem; }
     .field label { display: block; font-weight: 600; font-size: 0.8rem; color: #475569; margin-bottom: 0.2rem; }
-    .field input, .field textarea { width: 100%; padding: 0.5rem 0.8rem; border: 1px solid #cbd5e1; border-radius: 0.6rem; font-size: 0.9rem; }
+    .field input, .field textarea {
+      width: 100%; padding: 0.5rem 0.8rem; border: 1px solid #cbd5e1;
+      border-radius: 0.6rem; font-size: 0.9rem;
+    }
     .field textarea { min-height: 60px; resize: vertical; }
-    .section-title { background: #1e3c34; color: white; padding: 0.5rem 1rem; border-radius: 0.5rem 0.5rem 0 0; font-size: 0.9rem; font-weight: 600; }
+    .section-title {
+      background: #1e3c34; color: white; padding: 0.5rem 1rem;
+      border-radius: 0.5rem 0.5rem 0 0; font-size: 0.9rem; font-weight: 600;
+    }
     .items-table { width: 100%; border-collapse: collapse; margin: 1rem 0; }
     .items-table th { background: #1e3c34; color: white; padding: 0.5rem; font-size: 0.8rem; }
     .items-table td { padding: 0.4rem; border: 1px solid #e2e8f0; }
@@ -117,57 +123,128 @@
     .subtotal-cell { font-weight: bold; background: #f1f5f9; }
     .totals { text-align: right; margin-top: 1rem; border-top: 2px solid #e2e8f0; padding-top: 0.8rem; }
     .totals div { margin: 0.2rem 0; font-size: 1rem; }
-    .auth-section { display: flex; flex-direction: column; align-items: center; margin-top: 1.5rem; border-top: 2px solid #e2e8f0; padding-top: 1rem; }
     .auth-field { width: 280px; text-align: center; }
     .auth-field label { font-weight: 600; margin-bottom: 1rem; display: block; }
     .auth-field .firma-line { border-bottom: 1px solid #1e3c34; width: 100%; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem; }
 
-    /* ── IMPRESIÓN ── */
+    /* ═══════════════════════════════════════════════
+       IMPRESIÓN - LOGO SIN CUADRO NEGRO Y AUTORIZÓ ABAJO
+       y DATE más pequeño
+       ═══════════════════════════════════════════════ */
     @media print {
       body { background: white; padding: 0; }
       .app-container { max-width: 100%; margin: 0; }
-      .header .btn, .kpi-row, .orders-list, .btn, .modal-actions, .add-item-btn, #nuevaOrdenBtn, .delete-logo-btn { display: none !important; }
+
+      /* Ocultar elementos que no deben imprimirse */
+      .kpi-row, .orders-list, .modal-actions, .add-item-btn,
+      .delete-logo-btn, .btn-primary, #nuevaOrdenBtn { display: none !important; }
+
+      /* Mostrar el header pero sin fondo oscuro, sin padding excesivo, solo el logo */
+      .header {
+        background: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin-bottom: 0.5cm !important;
+        border-radius: 0 !important;
+        display: flex !important;
+        justify-content: flex-start !important;
+      }
+      .header .btn { display: none !important; }
+      .logo-area { margin: 0 !important; }
+      .logo-placeholder { display: none !important; }
+      .logo-img { height: 0.8cm !important; background: white; }
+
+      /* Modal visible como contenido principal */
       .modal { display: none !important; }
-      .modal.active { display: flex !important; position: static; background: none; }
-      .modal.active .modal-content { box-shadow: none; border-radius: 0; width: 100%; max-width: 100%; padding: 1cm; }
-      .logo-area { display: flex !important; margin-bottom: 1cm; }
-      .logo-placeholder { display: none; }
-      .modal.active input, .modal.active textarea { border: none !important; background: transparent; padding: 2px; font-size: 11pt; }
-      .modal.active .items-table th { background: #1e3c34 !important; color: white !important; }
-      .modal.active .auth-section { border-top: 2px solid #000; }
-      .modal.active .auth-field .firma-line { border-bottom: 1px solid #000; }
-      @page { margin: 1cm; }
+      .modal.active {
+        display: block !important; position: static; background: none;
+      }
+      .modal.active .modal-content {
+        box-shadow: none; border-radius: 0; width: 100%;
+        max-width: 100%; padding: 0; overflow: visible; background: white;
+      }
+
+      /* Ajustes para inputs y textos */
+      .modal.active input,
+      .modal.active textarea {
+        border: none !important; background: transparent; padding: 0; font-size: 8pt;
+      }
+
+      /* Hacer que la línea de DATE sea más pequeña */
+      .print-date-small {
+        font-size: 7pt !important;
+        margin-bottom: 0.2cm !important;
+      }
+      .print-date-small input {
+        font-size: 7pt !important;
+      }
+
+      .modal.active .section-title {
+        background: none !important; color: black !important;
+        font-weight: 700; padding: 0; font-size: 9pt;
+        border-bottom: 1px solid #555; margin-bottom: 4px;
+      }
+
+      .modal.active .items-table {
+        table-layout: fixed; width: 100%;
+        border: 1px solid #999; border-collapse: collapse;
+      }
+      .modal.active .items-table th,
+      .modal.active .items-table td {
+        padding: 2px 4px; border: 1px solid #ccc;
+        text-align: left; line-height: 1.1;
+      }
+      .modal.active .items-table th {
+        background: #f0f0f0 !important; color: black !important;
+        font-weight: 700; font-size: 8pt;
+      }
+      .modal.active .items-table td { font-size: 8pt; }
+      .modal.active .subtotal-cell { background: #fafafa; }
+
+      .modal.active .items-table th:nth-child(6),
+      .modal.active .items-table td:nth-child(6) { display: none; }
+
+      .modal.active .totals {
+        border-top: 1px solid black; padding-top: 0.15cm;
+        font-size: 9pt; text-align: right;
+      }
+
+      .modal.active .auth-section {
+        border-top: 1px solid black; margin-top: 0.3cm; padding-top: 0.15cm;
+      }
+      .modal.active .auth-field .firma-line { border-bottom: 1px solid black; }
+
+      @page { margin: 0.4cm; size: letter; }
     }
   </style>
 </head>
 <body>
 <div class="app-container">
-  <!-- CABECERA COLOR CORPORATIVO -->
   <div class="header">
     <div class="logo-area" id="logoArea"></div>
     <button class="btn btn-primary" id="nuevaOrdenBtn">+ Nueva Orden</button>
   </div>
 
-  <!-- KPIs -->
   <div class="kpi-row">
     <div class="kpi-card"><div class="kpi-label">Total Órdenes</div><div class="kpi-value" id="kpiTotal">0</div></div>
     <div class="kpi-card"><div class="kpi-label">Monto Acumulado</div><div class="kpi-value" id="kpiMonto">$0.00</div></div>
     <div class="kpi-card"><div class="kpi-label">Última Orden</div><div class="kpi-value" id="kpiUltima">-</div></div>
   </div>
 
-  <!-- LISTA DE ÓRDENES EXPANDIBLE -->
   <div class="orders-list" id="ordersListContainer"></div>
 </div>
 
-<!-- MODAL DEL FORMULARIO -->
 <div class="modal" id="ordenModal">
   <div class="modal-content">
     <div class="form-header">
-      <div><h2>ORDEN DE COMPRA</h2><span style="color:#64748b;">PURCHASE ORDER</span></div>
+      <div><h2>ORDEN DE COMPRA</h2><span style="color:#64748b;">SANTANA MANGO</span></div>
       <div><label>No: <input type="text" id="poNumber" placeholder="2026-100"></label></div>
     </div>
-    <div style="text-align:right; margin-bottom:1rem;"><label>DATE: <input type="date" id="poDate"></label></div>
+    <!-- Agregamos clase "print-date-small" para que al imprimir sea más pequeño -->
+    <div class="print-date-small" style="text-align:right; margin-bottom:1rem;">
+      <label>DATE: <input type="date" id="poDate"></label>
+    </div>
 
     <div class="form-grid">
       <div>
@@ -228,7 +305,16 @@
   (() => {
     const STORAGE_KEY = 'ordenes_santanamango';
     const TASA_IVA = 0.16;
-    let ordenes = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+
+    let ordenes = [];
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        ordenes = JSON.parse(stored);
+        if (!Array.isArray(ordenes)) ordenes = [];
+      }
+    } catch (e) { ordenes = []; }
+
     let editIndex = null;
     let lineas = [];
 
@@ -243,113 +329,232 @@
     const tasaIvaSpan = document.getElementById('tasaIva');
     tasaIvaSpan.textContent = (TASA_IVA * 100).toFixed(0);
 
-    // ── LOGO INTERACTIVO ────────────────────────
     const logoArea = document.getElementById('logoArea');
     let logoData = localStorage.getItem('santana_logo');
     function renderLogo() {
       if (logoData) {
         logoArea.innerHTML = `<div class="logo-wrapper"><img src="${logoData}" class="logo-img"><button class="delete-logo-btn">✕</button></div>`;
-        logoArea.querySelector('.delete-logo-btn').addEventListener('click', (e) => {
-          e.stopPropagation();
-          if(confirm('¿Eliminar el logotipo?')) { localStorage.removeItem('santana_logo'); logoData=null; renderLogo(); }
-        });
+        const delBtn = logoArea.querySelector('.delete-logo-btn');
+        if (delBtn) {
+          delBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if(confirm('¿Eliminar el logotipo?')) {
+              localStorage.removeItem('santana_logo');
+              logoData = null;
+              renderLogo();
+            }
+          });
+        }
       } else {
         logoArea.innerHTML = `<div class="logo-placeholder" id="uploadLogo">📷</div>`;
         document.getElementById('uploadLogo').addEventListener('click', () => {
           const inp = document.createElement('input'); inp.type='file'; inp.accept='image/*';
-          inp.onchange = e => { const f = e.target.files[0]; if(f){ const r = new FileReader(); r.onload = ev => { logoData=ev.target.result; localStorage.setItem('santana_logo', logoData); renderLogo(); }; r.readAsDataURL(f); } };
+          inp.onchange = e => {
+            const f = e.target.files[0];
+            if(f){
+              const r = new FileReader();
+              r.onload = ev => {
+                logoData = ev.target.result;
+                localStorage.setItem('santana_logo', logoData);
+                renderLogo();
+              };
+              r.readAsDataURL(f);
+            }
+          };
           inp.click();
         });
       }
     }
     renderLogo();
 
-    // ── FUNCIONES CRUD ───────────────────────────
-    function parsePO(po) { const p=po.split('-'); if(p.length===2) return [parseInt(p[0])||0, parseInt(p[1])||0]; const n=po.match(/\d+/g); return (n&&n.length>=2)?[parseInt(n[0]),parseInt(n[1])]:[0,0]; }
-    function ordenar() { ordenes.sort((a,b)=>{ const [yA,nA]=parsePO(a.poNumber),[yB,nB]=parsePO(b.poNumber); return yB-yA||nB-nA; }); }
-    function persistir() { ordenar(); localStorage.setItem(STORAGE_KEY, JSON.stringify(ordenes)); }
+    function parsePO(po) {
+      const p = po.split('-');
+      if(p.length === 2) return [parseInt(p[0])||0, parseInt(p[1])||0];
+      const n = po.match(/\d+/g);
+      return (n && n.length >= 2) ? [parseInt(n[0]), parseInt(n[1])] : [0,0];
+    }
+    function ordenar() {
+      ordenes.sort((a,b) => {
+        const [yA,nA] = parsePO(a.poNumber);
+        const [yB,nB] = parsePO(b.poNumber);
+        return yB - yA || nB - nA;
+      });
+    }
+    function persistir() {
+      ordenar();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(ordenes));
+    }
 
     function calcTotales() {
-      let sub=0;
-      itemsTableBody.querySelectorAll('tr').forEach(f=>{ sub+=(parseFloat(f.querySelector('.cantidad')?.value)||0)*(parseFloat(f.querySelector('.precioUnit')?.value)||0); });
-      const iva=sub*TASA_IVA;
-      document.getElementById('subtotalVal').textContent=sub.toFixed(2);
-      document.getElementById('ivaVal').textContent=iva.toFixed(2);
-      document.getElementById('totalVal').textContent=(sub+iva).toFixed(2);
+      let sub = 0;
+      itemsTableBody.querySelectorAll('tr').forEach(fila => {
+        const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
+        const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
+        sub += c * p;
+      });
+      const iva = sub * TASA_IVA;
+      document.getElementById('subtotalVal').textContent = sub.toFixed(2);
+      document.getElementById('ivaVal').textContent = iva.toFixed(2);
+      document.getElementById('totalVal').textContent = (sub + iva).toFixed(2);
     }
-    function actualizarSubtotal(f) {
-      const c=parseFloat(f.querySelector('.cantidad')?.value)||0, p=parseFloat(f.querySelector('.precioUnit')?.value)||0;
-      f.querySelector('.subtotal-cell').textContent=(c*p).toFixed(2);
+    function actualizarSubtotal(fila) {
+      const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
+      const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
+      fila.querySelector('.subtotal-cell').textContent = (c * p).toFixed(2);
     }
 
     itemsTableBody.addEventListener('input', e => {
-      const inp=e.target;
-      if(!inp.classList.contains('cantidad')&&!inp.classList.contains('precioUnit')&&!inp.classList.contains('codigo')&&!inp.classList.contains('descripcion')) return;
-      const fila=inp.closest('tr'), idx=parseInt(inp.dataset.idx);
-      if(inp.classList.contains('codigo')) lineas[idx].codigo=inp.value;
-      else if(inp.classList.contains('descripcion')) lineas[idx].descripcion=inp.value;
-      else if(inp.classList.contains('cantidad')) lineas[idx].cantidad=parseFloat(inp.value)||0;
-      else if(inp.classList.contains('precioUnit')) lineas[idx].precioUnit=parseFloat(inp.value)||0;
-      if(inp.classList.contains('cantidad')||inp.classList.contains('precioUnit')) actualizarSubtotal(fila);
+      const inp = e.target;
+      if (!inp.classList.contains('cantidad') && !inp.classList.contains('precioUnit') &&
+          !inp.classList.contains('codigo') && !inp.classList.contains('descripcion')) return;
+      const fila = inp.closest('tr');
+      const idx = parseInt(inp.dataset.idx);
+      if (inp.classList.contains('codigo')) lineas[idx].codigo = inp.value;
+      else if (inp.classList.contains('descripcion')) lineas[idx].descripcion = inp.value;
+      else if (inp.classList.contains('cantidad')) lineas[idx].cantidad = parseFloat(inp.value) || 0;
+      else if (inp.classList.contains('precioUnit')) lineas[idx].precioUnit = parseFloat(inp.value) || 0;
+      if (inp.classList.contains('cantidad') || inp.classList.contains('precioUnit')) actualizarSubtotal(fila);
       calcTotales();
     });
-    itemsTableBody.addEventListener('click', e => { if(e.target.dataset.deleteLine!==undefined){ lineas.splice(parseInt(e.target.dataset.deleteLine),1); renderLineas(); } });
-    function renderLineas(){
-      itemsTableBody.innerHTML='';
-      lineas.forEach((l,i)=>{
-        const tr=document.createElement('tr');
-        tr.innerHTML=`<td><input type="text" class="codigo" value="${l.codigo||''}" data-idx="${i}"></td><td><input type="text" class="descripcion" value="${l.descripcion||''}" data-idx="${i}"></td><td><input type="number" step="any" class="cantidad" value="${l.cantidad||''}" data-idx="${i}"></td><td><input type="number" step="any" class="precioUnit" value="${l.precioUnit||''}" data-idx="${i}"></td><td class="subtotal-cell">${((l.cantidad||0)*(l.precioUnit||0)).toFixed(2)}</td><td><button class="btn btn-danger btn-sm" data-delete-line="${i}">X</button></td>`;
+    itemsTableBody.addEventListener('click', e => {
+      if (e.target.dataset.deleteLine !== undefined) {
+        lineas.splice(parseInt(e.target.dataset.deleteLine), 1);
+        renderLineas();
+      }
+    });
+    function renderLineas() {
+      itemsTableBody.innerHTML = '';
+      lineas.forEach((l, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><input type="text" class="codigo" value="${l.codigo||''}" data-idx="${i}"></td>
+          <td><input type="text" class="descripcion" value="${l.descripcion||''}" data-idx="${i}"></td>
+          <td><input type="number" step="any" class="cantidad" value="${l.cantidad||''}" data-idx="${i}"></td>
+          <td><input type="number" step="any" class="precioUnit" value="${l.precioUnit||''}" data-idx="${i}"></td>
+          <td class="subtotal-cell">${((l.cantidad||0)*(l.precioUnit||0)).toFixed(2)}</td>
+          <td><button class="btn btn-danger btn-sm" data-delete-line="${i}">X</button></td>
+        `;
         itemsTableBody.appendChild(tr);
       });
       calcTotales();
     }
-    addItemBtn.addEventListener('click',()=>{ lineas.push({codigo:'',descripcion:'',cantidad:0,precioUnit:0}); renderLineas(); });
+    addItemBtn.addEventListener('click', () => {
+      lineas.push({codigo:'', descripcion:'', cantidad:0, precioUnit:0});
+      renderLineas();
+    });
 
-    function resetForm(){
-      ['poNumber','poDate','provNombre','provDireccion','provContacto','factEmpresa','factDireccion','factRFC','personaRecibe','comentarios','dirEntrega1','dirEntrega2','dirEntrega3','dirEntrega4'].forEach(id=>document.getElementById(id).value='');
-      lineas=[]; renderLineas(); editIndex=null;
+    function resetForm() {
+      ['poNumber','poDate','provNombre','provDireccion','provContacto',
+       'factEmpresa','factDireccion','factRFC','personaRecibe','comentarios',
+       'dirEntrega1','dirEntrega2','dirEntrega3','dirEntrega4'
+      ].forEach(id => document.getElementById(id).value = '');
+      lineas = [];
+      renderLineas();
+      editIndex = null;
     }
-    function obtenerOrden(){
+    function obtenerOrden() {
       return {
-        poNumber: document.getElementById('poNumber').value.trim(), fecha: document.getElementById('poDate').value,
-        proveedor:{ nombre: document.getElementById('provNombre').value.trim(), direccion: document.getElementById('provDireccion').value.trim(), contacto: document.getElementById('provContacto').value.trim() },
-        facturacion:{ empresa: document.getElementById('factEmpresa').value.trim(), direccion: document.getElementById('factDireccion').value.trim(), rfc: document.getElementById('factRFC').value.trim() },
-        comentarios: document.getElementById('comentarios').value.trim(), personaRecibe: document.getElementById('personaRecibe').value.trim(),
-        dirEntrega: [document.getElementById('dirEntrega1').value.trim(), document.getElementById('dirEntrega2').value.trim(), document.getElementById('dirEntrega3').value.trim(), document.getElementById('dirEntrega4').value.trim()],
-        lineas: lineas.map(l=>({codigo:l.codigo,descripcion:l.descripcion,cantidad:l.cantidad,precioUnit:l.precioUnit})),
-        subtotal: parseFloat(document.getElementById('subtotalVal').textContent)||0, iva: parseFloat(document.getElementById('ivaVal').textContent)||0, total: parseFloat(document.getElementById('totalVal').textContent)||0
+        poNumber: document.getElementById('poNumber').value.trim(),
+        fecha: document.getElementById('poDate').value,
+        proveedor: {
+          nombre: document.getElementById('provNombre').value.trim(),
+          direccion: document.getElementById('provDireccion').value.trim(),
+          contacto: document.getElementById('provContacto').value.trim()
+        },
+        facturacion: {
+          empresa: document.getElementById('factEmpresa').value.trim(),
+          direccion: document.getElementById('factDireccion').value.trim(),
+          rfc: document.getElementById('factRFC').value.trim()
+        },
+        comentarios: document.getElementById('comentarios').value.trim(),
+        personaRecibe: document.getElementById('personaRecibe').value.trim(),
+        dirEntrega: [
+          document.getElementById('dirEntrega1').value.trim(),
+          document.getElementById('dirEntrega2').value.trim(),
+          document.getElementById('dirEntrega3').value.trim(),
+          document.getElementById('dirEntrega4').value.trim()
+        ],
+        lineas: lineas.map(l => ({
+          codigo: l.codigo, descripcion: l.descripcion,
+          cantidad: l.cantidad, precioUnit: l.precioUnit
+        })),
+        subtotal: parseFloat(document.getElementById('subtotalVal').textContent) || 0,
+        iva: parseFloat(document.getElementById('ivaVal').textContent) || 0,
+        total: parseFloat(document.getElementById('totalVal').textContent) || 0
       };
     }
-    function cargarEnForm(orden,idx){
-      document.getElementById('poNumber').value=orden.poNumber||''; document.getElementById('poDate').value=orden.fecha||'';
-      document.getElementById('provNombre').value=orden.proveedor?.nombre||''; document.getElementById('provDireccion').value=orden.proveedor?.direccion||''; document.getElementById('provContacto').value=orden.proveedor?.contacto||'';
-      document.getElementById('factEmpresa').value=orden.facturacion?.empresa||''; document.getElementById('factDireccion').value=orden.facturacion?.direccion||''; document.getElementById('factRFC').value=orden.facturacion?.rfc||'';
-      document.getElementById('personaRecibe').value=orden.personaRecibe||''; document.getElementById('comentarios').value=orden.comentarios||'';
-      const dir=orden.dirEntrega||['','','','']; document.getElementById('dirEntrega1').value=dir[0]||''; document.getElementById('dirEntrega2').value=dir[1]||''; document.getElementById('dirEntrega3').value=dir[2]||''; document.getElementById('dirEntrega4').value=dir[3]||'';
-      lineas=(orden.lineas||[]).map(l=>({...l})); renderLineas(); editIndex=idx;
+    function cargarEnForm(orden, idx) {
+      document.getElementById('poNumber').value = orden.poNumber || '';
+      document.getElementById('poDate').value = orden.fecha || '';
+      document.getElementById('provNombre').value = orden.proveedor?.nombre || '';
+      document.getElementById('provDireccion').value = orden.proveedor?.direccion || '';
+      document.getElementById('provContacto').value = orden.proveedor?.contacto || '';
+      document.getElementById('factEmpresa').value = orden.facturacion?.empresa || '';
+      document.getElementById('factDireccion').value = orden.facturacion?.direccion || '';
+      document.getElementById('factRFC').value = orden.facturacion?.rfc || '';
+      document.getElementById('personaRecibe').value = orden.personaRecibe || '';
+      document.getElementById('comentarios').value = orden.comentarios || '';
+      const dir = orden.dirEntrega || ['','','',''];
+      document.getElementById('dirEntrega1').value = dir[0] || '';
+      document.getElementById('dirEntrega2').value = dir[1] || '';
+      document.getElementById('dirEntrega3').value = dir[2] || '';
+      document.getElementById('dirEntrega4').value = dir[3] || '';
+      lineas = (orden.lineas || []).map(l => ({...l}));
+      renderLineas();
+      editIndex = idx;
     }
 
-    saveFormBtn.addEventListener('click',()=>{
-      const orden=obtenerOrden();
-      if(!orden.poNumber||!orden.fecha){ alert('Número de orden y fecha son obligatorios.'); return; }
-      if(editIndex!==null) ordenes[editIndex]=orden; else ordenes.push(orden);
-      persistir(); renderLista(); modal.classList.remove('active'); resetForm();
+    saveFormBtn.addEventListener('click', () => {
+      const orden = obtenerOrden();
+      if (!orden.poNumber || !orden.fecha) {
+        alert('Número de orden y fecha son obligatorios.');
+        return;
+      }
+      if (editIndex !== null) ordenes[editIndex] = orden;
+      else ordenes.push(orden);
+      persistir();
+      renderLista();
+      modal.classList.remove('active');
+      resetForm();
     });
-    nuevaOrdenBtn.addEventListener('click',()=>{ resetForm(); modal.classList.add('active'); });
-    cancelModalBtn.addEventListener('click',()=>{ modal.classList.remove('active'); resetForm(); });
-    printBtn.addEventListener('click',()=>window.print());
+    nuevaOrdenBtn.addEventListener('click', () => {
+      resetForm();
+      modal.classList.add('active');
+    });
+    cancelModalBtn.addEventListener('click', () => {
+      modal.classList.remove('active');
+      resetForm();
+    });
 
-    // ── LISTA EXPANDIBLE ─────────────────────────
-    function renderLista(){
+    printBtn.addEventListener('click', () => {
+      const lineasCount = itemsTableBody.querySelectorAll('tr').length;
+      if (lineasCount > 8) {
+        document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '7pt');
+      } else if (lineasCount > 5) {
+        document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '8pt');
+      }
+      window.print();
+    });
+
+    function renderLista() {
       ordenar();
-      ordersListContainer.innerHTML='';
-      if(!ordenes.length){ ordersListContainer.innerHTML='<div style="padding:2rem;text-align:center;color:#64748b;">No hay órdenes registradas.</div>'; }
-      ordenes.forEach((o,idx)=>{
-        const div=document.createElement('div'); div.className='order-item';
-        div.innerHTML=`
+      ordersListContainer.innerHTML = '';
+      if (!ordenes.length) {
+        ordersListContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#64748b;">No hay órdenes registradas.</div>';
+        document.getElementById('kpiTotal').textContent = '0';
+        document.getElementById('kpiMonto').textContent = '$0.00';
+        document.getElementById('kpiUltima').textContent = '-';
+        return;
+      }
+      ordenes.forEach((o, idx) => {
+        const div = document.createElement('div');
+        div.className = 'order-item';
+        div.innerHTML = `
           <div class="order-summary">
-            <span class="po">${o.poNumber}</span><span class="proveedor">${o.proveedor?.nombre||'Sin proveedor'}</span>
-            <span class="fecha">${o.fecha}</span><span class="total">$${(o.total||0).toFixed(2)}</span>
+            <span class="po">${o.poNumber}</span>
+            <span class="proveedor">${o.proveedor?.nombre || 'Sin proveedor'}</span>
+            <span class="fecha">${o.fecha}</span>
+            <span class="total">$${(o.total||0).toFixed(2)}</span>
             <span class="icono">▼</span>
           </div>
           <div class="order-details">
@@ -369,19 +574,37 @@
             </div>
           </div>
         `;
-        const summary=div.querySelector('.order-summary');
-        summary.addEventListener('click',()=>{ div.classList.toggle('open'); });
+        const summary = div.querySelector('.order-summary');
+        summary.addEventListener('click', () => { div.classList.toggle('open'); });
         ordersListContainer.appendChild(div);
       });
-      document.querySelectorAll('.edit-btn').forEach(b=>b.addEventListener('click',(e)=>{ e.stopPropagation(); const i=parseInt(b.dataset.idx); resetForm(); cargarEnForm(ordenes[i],i); modal.classList.add('active'); }));
-      document.querySelectorAll('.delete-btn').forEach(b=>b.addEventListener('click',(e)=>{ e.stopPropagation(); const i=parseInt(b.dataset.idx); if(confirm('¿Eliminar esta orden?')){ ordenes.splice(i,1); persistir(); renderLista(); } }));
-
-      document.getElementById('kpiTotal').textContent=ordenes.length;
-      document.getElementById('kpiMonto').textContent='$'+ordenes.reduce((s,o)=>s+(o.total||0),0).toFixed(2);
-      document.getElementById('kpiUltima').textContent=ordenes.length?ordenes[0]?.poNumber:'-';
+      document.querySelectorAll('.edit-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const i = parseInt(b.dataset.idx);
+          resetForm();
+          cargarEnForm(ordenes[i], i);
+          modal.classList.add('active');
+        });
+      });
+      document.querySelectorAll('.delete-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const i = parseInt(b.dataset.idx);
+          if (confirm('¿Eliminar esta orden?')) {
+            ordenes.splice(i, 1);
+            persistir();
+            renderLista();
+          }
+        });
+      });
+      document.getElementById('kpiTotal').textContent = ordenes.length;
+      document.getElementById('kpiMonto').textContent = '$' + ordenes.reduce((s,o) => s + (o.total||0), 0).toFixed(2);
+      document.getElementById('kpiUltima').textContent = ordenes.length ? ordenes[0]?.poNumber : '-';
     }
 
-    ordenar(); renderLista();
+    ordenar();
+    renderLista();
   })();
 </script>
 </body>
