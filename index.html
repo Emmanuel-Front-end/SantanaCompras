@@ -340,22 +340,16 @@
 
 <script>
   (() => {
-    const STORAGE_KEY = 'ordenes_santanamango';
+    // ✅ TU URL DE GOOGLE APPS SCRIPT (YA INCLUIDA)
+    const API_URL = 'https://script.google.com/macros/s/AKfycbwn_AQkvTKTBJx6AR77prqZTPdpiiMpoOGd9egVY2zf11R34asESgt1Qv6GZCMUeJ7gtQ/exec';
+
     const TASA_IVA = 0.16;
     const RETENCION_PORCENTAJE = 0.04;
 
     let ordenes = [];
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        ordenes = JSON.parse(stored);
-        if (!Array.isArray(ordenes)) ordenes = [];
-      }
-    } catch (e) { ordenes = []; }
-
     let editIndex = null;
+    let editId = null;
     let lineas = [];
-
     let maniobrasActivo = false;
     let retencionActivo = false;
     let maniobrasValor = 12.00;
@@ -377,7 +371,7 @@
     const retencionLine = document.getElementById('retencionLine');
     const ivaLine = document.getElementById('ivaLine');
 
-    // ── LOGO ─────────────────────────────────────
+    // ── LOGO (localStorage) ─────────────────────────────────────
     const logoArea = document.getElementById('logoArea');
     let logoData = localStorage.getItem('santana_logo');
     function renderLogo() {
@@ -416,7 +410,7 @@
     }
     renderLogo();
 
-    // ── CÁLCULOS ─────────────────────────────────
+    // ── CÁLCULOS ──────────────────────────────────────────────
     function calcTotales() {
       let subtotalProductos = 0;
       itemsTableBody.querySelectorAll('tr').forEach(fila => {
@@ -466,7 +460,45 @@
     }
     bindExtraEvents();
 
-    // ── PERSISTENCIA ────────────────────────────
+    // ── COMUNICACIÓN CON GOOGLE APPS SCRIPT ────────────────────
+    async function cargarOrdenesDesdeServidor() {
+      try {
+        const resp = await fetch(`${API_URL}?action=cargar`);
+        const texto = await resp.text();
+        const datos = JSON.parse(texto);
+        if (datos.error) throw new Error(datos.error);
+        ordenes = datos;
+        ordenar();
+        renderLista();
+      } catch (error) {
+        console.error(error);
+        alert('Error al cargar órdenes. Verifica que el script de Google esté desplegado correctamente y con acceso "Cualquier persona".');
+        ordenes = [];
+        renderLista();
+      }
+    }
+
+    async function guardarOrdenEnServidor(orden, esNueva = true, idExistente = null) {
+      const params = new URLSearchParams();
+      params.append('action', esNueva ? 'guardar' : 'actualizar');
+      params.append('datos', JSON.stringify(orden));
+      if (!esNueva && idExistente) params.append('id', idExistente);
+      const resp = await fetch(`${API_URL}?${params.toString()}`);
+      const texto = await resp.text();
+      const resultado = JSON.parse(texto);
+      if (resultado.error) throw new Error(resultado.error);
+      return resultado;
+    }
+
+    async function eliminarOrdenEnServidor(id) {
+      const params = new URLSearchParams({ action: 'eliminar', id });
+      const resp = await fetch(`${API_URL}?${params.toString()}`);
+      const texto = await resp.text();
+      const resultado = JSON.parse(texto);
+      if (resultado.error) throw new Error(resultado.error);
+    }
+
+    // ── ORDENAMIENTO ──────────────────────────────────────────
     function parsePO(po) {
       const p = po.split('-');
       if(p.length === 2) return [parseInt(p[0])||0, parseInt(p[1])||0];
@@ -480,9 +512,8 @@
         return yB - yA || nB - nA;
       });
     }
-    function persistir() { ordenar(); localStorage.setItem(STORAGE_KEY, JSON.stringify(ordenes)); }
 
-    // ── LÍNEAS DE PRODUCTOS ─────────────────────
+    // ── LÍNEAS DE PRODUCTOS ───────────────────────────────────
     itemsTableBody.addEventListener('input', e => {
       const inp = e.target;
       if (!inp.classList.contains('cantidad') && !inp.classList.contains('precioUnit') &&
@@ -507,8 +538,8 @@
       lineas.forEach((l, i) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><input type="text" class="codigo" value="${l.codigo||''}" data-idx="${i}"></td>
-          <td><input type="text" class="descripcion" value="${l.descripcion||''}" data-idx="${i}"></td>
+          <td><input type="text" class="codigo" value="${escapeHtml(l.codigo||'')}" data-idx="${i}"></td>
+          <td><input type="text" class="descripcion" value="${escapeHtml(l.descripcion||'')}" data-idx="${i}"></td>
           <td><input type="number" step="any" class="cantidad" value="${l.cantidad||''}" data-idx="${i}"></td>
           <td><input type="number" step="any" class="precioUnit" value="${l.precioUnit||''}" data-idx="${i}"></td>
           <td class="subtotal-cell">${((l.cantidad||0)*(l.precioUnit||0)).toFixed(2)}</td>
@@ -523,24 +554,8 @@
       renderLineas();
     });
 
-    // ── FORMULARIO ──────────────────────────────
-    function resetForm() {
-      ['poNumber','poDate','provNombre','provDireccion','provContacto',
-       'factEmpresa','factDireccion','factRFC','personaRecibe','comentarios',
-       'dirEntrega1','dirEntrega2','dirEntrega3','dirEntrega4'
-      ].forEach(id => document.getElementById(id).value = '');
-      lineas = [];
-      renderLineas();
-      editIndex = null;
-      maniobrasActivo = false;
-      retencionActivo = false;
-      maniobrasValor = 12.00;
-      enableManiobrasChk.checked = false;
-      enableRetencionChk.checked = false;
-      maniobrasAmountInput.value = '12.00';
-      calcTotales();
-    }
-    function obtenerOrden() {
+    // ── FORMULARIO ────────────────────────────────────────────
+    function obtenerOrdenDesdeFormulario() {
       let subtotalProductos = 0;
       itemsTableBody.querySelectorAll('tr').forEach(fila => {
         const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
@@ -583,7 +598,8 @@
         retencionActivo: retencionActivo,
       };
     }
-    function cargarEnForm(orden, idx) {
+
+    function cargarFormularioConOrden(orden, idxEnArray, idReal) {
       document.getElementById('poNumber').value = orden.poNumber || '';
       document.getElementById('poDate').value = orden.fecha || '';
       document.getElementById('provNombre').value = orden.proveedor?.nombre || '';
@@ -608,23 +624,60 @@
       enableRetencionChk.checked = retencionActivo;
       maniobrasAmountInput.value = maniobrasValor.toFixed(2);
       calcTotales();
-      editIndex = idx;
+      editIndex = idxEnArray;
+      editId = idReal;
     }
 
-    saveFormBtn.addEventListener('click', () => {
-      const orden = obtenerOrden();
-      if (!orden.poNumber || !orden.fecha) { alert('Número de orden y fecha son obligatorios.'); return; }
-      if (editIndex !== null) ordenes[editIndex] = orden;
-      else ordenes.push(orden);
-      persistir();
-      renderLista();
-      modal.classList.remove('active');
-      resetForm();
-    });
-    nuevaOrdenBtn.addEventListener('click', () => { resetForm(); modal.classList.add('active'); });
-    cancelModalBtn.addEventListener('click', () => { modal.classList.remove('active'); resetForm(); });
+    function resetFormulario() {
+      ['poNumber','poDate','provNombre','provDireccion','provContacto',
+       'factEmpresa','factDireccion','factRFC','personaRecibe','comentarios',
+       'dirEntrega1','dirEntrega2','dirEntrega3','dirEntrega4'
+      ].forEach(id => document.getElementById(id).value = '');
+      lineas = [];
+      renderLineas();
+      editIndex = null;
+      editId = null;
+      maniobrasActivo = false;
+      retencionActivo = false;
+      maniobrasValor = 12.00;
+      enableManiobrasChk.checked = false;
+      enableRetencionChk.checked = false;
+      maniobrasAmountInput.value = '12.00';
+      calcTotales();
+    }
 
-    // ── IMPRESIÓN ───────────────────────────────
+    // ── GUARDAR ────────────────────────────────────────────────
+    saveFormBtn.addEventListener('click', async () => {
+      const orden = obtenerOrdenDesdeFormulario();
+      if (!orden.poNumber || !orden.fecha) {
+        alert('Número de orden y fecha son obligatorios.');
+        return;
+      }
+      try {
+        if (editIndex !== null && editId !== null) {
+          await guardarOrdenEnServidor(orden, false, editId);
+        } else {
+          await guardarOrdenEnServidor(orden, true);
+        }
+        await cargarOrdenesDesdeServidor();
+        modal.classList.remove('active');
+        resetFormulario();
+      } catch (error) {
+        console.error(error);
+        alert('Error al guardar la orden. Revisa la conexión.');
+      }
+    });
+
+    nuevaOrdenBtn.addEventListener('click', () => {
+      resetFormulario();
+      modal.classList.add('active');
+    });
+    cancelModalBtn.addEventListener('click', () => {
+      modal.classList.remove('active');
+      resetFormulario();
+    });
+
+    // ── IMPRESIÓN (sin cambios funcionales) ───────────────────
     function prepararImpresion() {
       const filas = itemsTableBody.querySelectorAll('tr');
       const originalData = [];
@@ -665,8 +718,6 @@
         });
       });
     }
-
-    // Oculta líneas de maniobras/retención si no están marcadas, retorna los display originales
     function ocultarLineasExtraParaImpresion() {
       const lines = [maniobrasLine, retencionLine];
       const original = lines.map(line => line.style.display);
@@ -685,8 +736,6 @@
     let printingFromList = false;
     let originalTableData = null;
     let originalLineDisplays = null;
-
-    // Después de imprimir, restaurar todo y cerrar modal si venía de la lista
     window.addEventListener('afterprint', () => {
       if (printingFromList) {
         if (originalTableData) {
@@ -698,15 +747,14 @@
           originalLineDisplays = null;
         }
         modal.classList.remove('active');
-        resetForm();
+        resetFormulario();
         printingFromList = false;
       }
     });
 
-    // Impresión desde el modal (botón Imprimir)
     printBtn.addEventListener('click', () => {
       originalLineDisplays = ocultarLineasExtraParaImpresion();
-      const originalData = prepararImpresion();
+      originalTableData = prepararImpresion();
       const lineasCount = itemsTableBody.querySelectorAll('tr').length;
       if (lineasCount > 8) {
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '7pt');
@@ -714,7 +762,7 @@
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '8pt');
       }
       window.print();
-      restaurarImpresion(originalData);
+      restaurarImpresion(originalTableData);
       if (originalLineDisplays) {
         restaurarLineasExtra(originalLineDisplays);
         originalLineDisplays = null;
@@ -722,11 +770,12 @@
       document.querySelector('.modal.active .items-table')?.style.removeProperty('font-size');
     });
 
-    // Impresión directa desde la lista
-    function printOrder(idx) {
+    async function printOrderByIdx(idx) {
       printingFromList = true;
-      resetForm();
-      cargarEnForm(ordenes[idx], idx);
+      const orden = ordenes[idx];
+      if (!orden) return;
+      resetFormulario();
+      cargarFormularioConOrden(orden, idx, orden.id);
       modal.classList.add('active');
       setTimeout(() => {
         originalLineDisplays = ocultarLineasExtraParaImpresion();
@@ -735,9 +784,8 @@
       }, 150);
     }
 
-    // ── LISTA DE ÓRDENES ────────────────────────
+    // ── RENDERIZAR LISTA ──────────────────────────────────────
     function renderLista() {
-      ordenar();
       ordersListContainer.innerHTML = '';
       if (!ordenes.length) {
         ordersListContainer.innerHTML = '<div style="padding:2rem;text-align:center;color:#64748b;">No hay órdenes registradas.</div>';
@@ -753,23 +801,23 @@
         div.className = 'order-item';
         div.innerHTML = `
           <div class="order-summary">
-            <span class="po">${o.poNumber}</span>
-            <span class="proveedor">${o.proveedor?.nombre || 'Sin proveedor'}</span>
-            <span class="fecha">${o.fecha}</span>
+            <span class="po">${escapeHtml(o.poNumber)}</span>
+            <span class="proveedor">${escapeHtml(o.proveedor?.nombre || 'Sin proveedor')}</span>
+            <span class="fecha">${escapeHtml(o.fecha)}</span>
             <span class="total">$${(o.total||0).toFixed(2)}</span>
             <span class="icono">▼</span>
           </div>
           <div class="order-details">
             <div class="detail-grid">
               <div>
-                <div class="detail-block"><label>Facturación</label><span>${o.facturacion?.empresa||''} / ${o.facturacion?.rfc||''}</span></div>
-                <div class="detail-block"><label>Persona que recibe</label><span>${o.personaRecibe||'-'}</span></div>
+                <div class="detail-block"><label>Facturación</label><span>${escapeHtml(o.facturacion?.empresa||'')} / ${escapeHtml(o.facturacion?.rfc||'')}</span></div>
+                <div class="detail-block"><label>Persona que recibe</label><span>${escapeHtml(o.personaRecibe||'-')}</span></div>
                 ${o.maniobrasActivo ? `<div class="detail-block"><label>Maniobras</label><span>$${o.maniobrasValor?.toFixed(2) || '0.00'}</span></div>` : ''}
                 ${o.retencionActivo ? `<div class="detail-block"><label>Retención (4%)</label><span>$${retencionMostrar.toFixed(2)}</span></div>` : ''}
               </div>
               <div>
-                <div class="detail-block"><label>Comentarios</label><span>${o.comentarios||'-'}</span></div>
-                <div class="detail-block"><label>Dirección de entrega</label><span>${(o.dirEntrega||[]).filter(l=>l).join(', ')||'-'}</span></div>
+                <div class="detail-block"><label>Comentarios</label><span>${escapeHtml(o.comentarios||'-')}</span></div>
+                <div class="detail-block"><label>Dirección de entrega</label><span>${escapeHtml((o.dirEntrega||[]).filter(l=>l).join(', ')||'-')}</span></div>
               </div>
             </div>
             <div class="detail-actions">
@@ -785,29 +833,38 @@
       });
 
       document.querySelectorAll('.print-order-btn').forEach(b => {
-        b.addEventListener('click', (e) => {
+        b.addEventListener('click', async (e) => {
           e.stopPropagation();
           const i = parseInt(b.dataset.idx);
-          printOrder(i);
+          await printOrderByIdx(i);
         });
       });
       document.querySelectorAll('.edit-btn').forEach(b => {
-        b.addEventListener('click', (e) => {
+        b.addEventListener('click', async (e) => {
           e.stopPropagation();
           const i = parseInt(b.dataset.idx);
-          resetForm();
-          cargarEnForm(ordenes[i], i);
-          modal.classList.add('active');
+          const orden = ordenes[i];
+          if (orden) {
+            resetFormulario();
+            cargarFormularioConOrden(orden, i, orden.id);
+            modal.classList.add('active');
+          }
         });
       });
       document.querySelectorAll('.delete-btn').forEach(b => {
-        b.addEventListener('click', (e) => {
+        b.addEventListener('click', async (e) => {
           e.stopPropagation();
           const i = parseInt(b.dataset.idx);
-          if (confirm('¿Eliminar esta orden?')) {
-            ordenes.splice(i, 1);
-            persistir();
-            renderLista();
+          const orden = ordenes[i];
+          if (!orden) return;
+          if (confirm(`¿Eliminar la orden ${orden.poNumber}?`)) {
+            try {
+              await eliminarOrdenEnServidor(orden.id);
+              await cargarOrdenesDesdeServidor();
+            } catch (err) {
+              console.error(err);
+              alert('Error al eliminar la orden.');
+            }
           }
         });
       });
@@ -817,8 +874,18 @@
       document.getElementById('kpiUltima').textContent = ordenes.length ? ordenes[0]?.poNumber : '-';
     }
 
-    ordenar();
-    renderLista();
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
+    }
+
+    // ── INICIO ─────────────────────────────────────────────────
+    cargarOrdenesDesdeServidor();
   })();
 </script>
 </body>
