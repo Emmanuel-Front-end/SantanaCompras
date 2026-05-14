@@ -207,7 +207,22 @@
         font-weight: 700; font-size: 8pt;
       }
       .modal.active .items-table td { font-size: 8pt; }
+      .modal.active .items-table td span.print-text {
+        display: block;
+        font-size: 8pt;
+        line-height: 1.1;
+      }
       .modal.active .subtotal-cell { background: #fafafa; }
+      .modal.active .items-table th:nth-child(1),
+      .modal.active .items-table td:nth-child(1) { width: 10%; }
+      .modal.active .items-table th:nth-child(2),
+      .modal.active .items-table td:nth-child(2) { width: auto; }
+      .modal.active .items-table th:nth-child(3),
+      .modal.active .items-table td:nth-child(3) { width: 10%; }
+      .modal.active .items-table th:nth-child(4),
+      .modal.active .items-table td:nth-child(4) { width: 13%; }
+      .modal.active .items-table th:nth-child(5),
+      .modal.active .items-table td:nth-child(5) { width: 13%; }
       .modal.active .items-table th:nth-child(6),
       .modal.active .items-table td:nth-child(6) { display: none; }
       .modal.active .totals {
@@ -308,7 +323,10 @@
     </div>
 
     <div class="auth-section">
-      <div style="margin-top:5rem;"class="auth-field"><label>Autorizó</label><div class="firma-line"></div></div>
+      <div class="auth-field" style="margin-top:1.5rem;">
+        <label>Autorizó</label>
+        <div class="firma-line"></div>
+      </div>
       <div class="auth-field"><label>Ing. Alfredo Dario Padilla Osuna</label></div>
     </div>
 
@@ -398,10 +416,6 @@
     }
     renderLogo();
 
-    // Cálculo: Base = subtotal + (maniobras si activa)
-    // IVA = Base * 16%
-    // Retención = Base * 4%
-    // Total = Base + IVA - Retención
     function calcTotales() {
       let subtotalProductos = 0;
       itemsTableBody.querySelectorAll('tr').forEach(fila => {
@@ -429,12 +443,7 @@
         retencionMontoSpan.textContent = '';
       }
       
-      // Ocultar la línea del IVA si no hay productos
-      if (subtotalProductos === 0) {
-        ivaLine.style.display = 'none';
-      } else {
-        ivaLine.style.display = '';
-      }
+      ivaLine.style.display = (base === 0) ? 'none' : '';
     }
 
     function actualizarSubtotal(fila) {
@@ -628,6 +637,51 @@
       resetForm();
     });
 
+    // 🔁 Función que convierte inputs de la tabla en texto antes de imprimir y los restaura después
+    function prepararImpresion() {
+      const filas = itemsTableBody.querySelectorAll('tr');
+      const originalData = []; // guardamos los inputs para restaurar
+      filas.forEach((fila, i) => {
+        const inputs = fila.querySelectorAll('input');
+        const dataFila = [];
+        inputs.forEach((input, j) => {
+          dataFila.push({
+            type: input.type,
+            className: input.className,
+            value: input.value,
+            step: input.step,
+            datasetIdx: input.dataset.idx
+          });
+          // Reemplazar el input por un span con el valor
+          const span = document.createElement('span');
+          span.className = 'print-text';
+          span.textContent = input.value;
+          input.replaceWith(span);
+        });
+        originalData.push(dataFila);
+      });
+      return originalData;
+    }
+
+    function restaurarImpresion(originalData) {
+      const filas = itemsTableBody.querySelectorAll('tr');
+      filas.forEach((fila, i) => {
+        const spans = fila.querySelectorAll('span.print-text');
+        const dataFila = originalData[i] || [];
+        spans.forEach((span, j) => {
+          const datos = dataFila[j] || {};
+          const input = document.createElement('input');
+          input.type = datos.type || 'text';
+          input.className = datos.className || '';
+          input.value = datos.value || '';
+          if (datos.step) input.step = datos.step;
+          if (datos.datasetIdx !== undefined) input.dataset.idx = datos.datasetIdx;
+          span.replaceWith(input);
+        });
+      });
+      // Re-vincular eventos de input si es necesario
+    }
+
     printBtn.addEventListener('click', () => {
       const lines = [maniobrasLine, retencionLine];
       const originalDisplay = [];
@@ -640,6 +694,9 @@
           line.style.display = '';
         }
       });
+
+      const originalData = prepararImpresion(); // convertir inputs a texto
+
       const lineasCount = itemsTableBody.querySelectorAll('tr').length;
       if (lineasCount > 8) {
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '7pt');
@@ -647,6 +704,9 @@
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '8pt');
       }
       window.print();
+      
+      // Restaurar todo
+      restaurarImpresion(originalData);
       lines.forEach((line, idx) => {
         line.style.display = originalDisplay[idx] || '';
       });
