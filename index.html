@@ -149,24 +149,24 @@
       border-radius: 0.4rem;
       font-size: 0.9rem;
     }
+    .retencion-monto {
+      font-weight: 500;
+      font-size: 0.9rem;
+      min-width: 70px;
+      text-align: left;
+      color: #2d6a4f;
+    }
     .auth-field { width: 280px; text-align: center; }
     .auth-field label { font-weight: 600; margin-bottom: 1rem; display: block; }
     .auth-field .firma-line { border-bottom: 1px solid #1e3c34; width: 100%; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem; }
 
-    /* ═══════════════════════════════════════════════
-       IMPRESIÓN - LOGO SIN CUADRO NEGRO Y AUTORIZÓ ABAJO
-       y DATE más pequeño - solo mostrar extras seleccionadas
-       ═══════════════════════════════════════════════ */
+    /* IMPRESIÓN */
     @media print {
       body { background: white; padding: 0; }
       .app-container { max-width: 100%; margin: 0; }
-
-      /* Ocultar elementos que no deben imprimirse */
       .kpi-row, .orders-list, .modal-actions, .add-item-btn,
       .delete-logo-btn, .btn-primary, #nuevaOrdenBtn { display: none !important; }
-
-      /* Mostrar el header pero sin fondo oscuro, sin padding excesivo, solo el logo */
       .header {
         background: none !important;
         box-shadow: none !important;
@@ -180,8 +180,6 @@
       .logo-area { margin: 0 !important; }
       .logo-placeholder { display: none !important; }
       .logo-img { height: 0.8cm !important; background: white; }
-
-      /* Modal visible como contenido principal */
       .modal { display: none !important; }
       .modal.active {
         display: block !important; position: static; background: none;
@@ -190,34 +188,24 @@
         box-shadow: none; border-radius: 0; width: 100%;
         max-width: 100%; padding: 0; overflow: visible; background: white;
       }
-
-      /* Ajustes para inputs y textos */
-      .modal.active input,
-      .modal.active textarea {
+      .modal.active input, .modal.active textarea {
         border: none !important; background: transparent; padding: 0; font-size: 8pt;
       }
-
-      /* Hacer que la línea de DATE sea más pequeña */
       .print-date-small {
         font-size: 7pt !important;
         margin-bottom: 0.2cm !important;
       }
-      .print-date-small input {
-        font-size: 7pt !important;
-      }
-
+      .print-date-small input { font-size: 7pt !important; }
       .modal.active .section-title {
         background: none !important; color: black !important;
         font-weight: 700; padding: 0; font-size: 9pt;
         border-bottom: 1px solid #555; margin-bottom: 4px;
       }
-
       .modal.active .items-table {
         table-layout: fixed; width: 100%;
         border: 1px solid #999; border-collapse: collapse;
       }
-      .modal.active .items-table th,
-      .modal.active .items-table td {
+      .modal.active .items-table th, .modal.active .items-table td {
         padding: 2px 4px; border: 1px solid #ccc;
         text-align: left; line-height: 1.1;
       }
@@ -227,33 +215,19 @@
       }
       .modal.active .items-table td { font-size: 8pt; }
       .modal.active .subtotal-cell { background: #fafafa; }
-
       .modal.active .items-table th:nth-child(6),
       .modal.active .items-table td:nth-child(6) { display: none; }
-
       .modal.active .totals {
         border-top: 1px solid black; padding-top: 0.15cm;
         font-size: 9pt; text-align: right;
       }
-
-      /* Estilos para las extras en impresión: ocultar checkbox y mostrar solo el texto */
-      .extra-line input[type="checkbox"] {
-        display: none !important;
-      }
-      .extra-line .extra-amount {
-        border: none !important;
-        padding: 0 !important;
-        width: auto !important;
-        text-align: right;
-      }
-      /* Las líneas no seleccionadas se ocultarán mediante JS antes de imprimir,
-         pero también podemos dejarlas visibles? Mejor JS las oculta. */
-
+      .extra-line input[type="checkbox"] { display: none !important; }
+      .extra-line .extra-amount { border: none !important; padding: 0 !important; width: auto !important; text-align: right; }
+      .extra-line .retencion-monto { display: inline !important; }
       .modal.active .auth-section {
         border-top: 1px solid black; margin-top: 0.3cm; padding-top: 0.15cm;
       }
       .modal.active .auth-field .firma-line { border-bottom: 1px solid black; }
-
       @page { margin: 0.4cm; size: letter; }
     }
   </style>
@@ -280,7 +254,6 @@
       <div><h2>ORDEN DE COMPRA</h2><span style="color:#64748b;">SANTANA MANGO</span></div>
       <div><label>No: <input type="text" id="poNumber" placeholder="2026-100"></label></div>
     </div>
-    <!-- Agregamos clase "print-date-small" para que al imprimir sea más pequeño -->
     <div class="print-date-small" style="text-align:right; margin-bottom:1rem;">
       <label>DATE: <input type="date" id="poDate"></label>
     </div>
@@ -324,18 +297,20 @@
 
     <div class="totals">
       <div>SUB-TOTAL: $<span id="subtotalVal">0.00</span></div>
-      <div>IVA (<span id="tasaIva">16</span>%): $<span id="ivaVal">0.00</span></div>
+      <div>IVA (16%): $<span id="ivaVal">0.00</span></div>
       
-      <!-- NUEVAS FUNCIONES: MANIOBRAS Y RETENCIÓN -->
+      <!-- MANIOBRAS: valor fijo editable -->
       <div class="extra-line" id="maniobrasLine">
         <input type="checkbox" id="enableManiobras">
         <span class="extra-label">Maniobras:</span>
         <input type="number" step="0.01" id="maniobrasAmount" class="extra-amount" value="12.00">
       </div>
+      
+      <!-- RETENCIÓN: solo checkbox y monto (4% fijo, sin textbox) -->
       <div class="extra-line" id="retencionLine">
         <input type="checkbox" id="enableRetencion">
-        <span class="extra-label">Retención:</span>
-        <input type="number" step="0.01" id="retencionAmount" class="extra-amount" value="18.77">
+        <span class="extra-label">Retención (4%):</span>
+        <span class="retencion-monto" id="retencionMontoSpan">($0.00)</span>
       </div>
       
       <div><strong>TOTAL: $<span id="totalVal">0.00</span></strong></div>
@@ -358,6 +333,7 @@
   (() => {
     const STORAGE_KEY = 'ordenes_santanamango';
     const TASA_IVA = 0.16;
+    const RETENCION_PORCENTAJE = 0.04;  // 4% fijo, no editable
 
     let ordenes = [];
     try {
@@ -375,7 +351,6 @@
     let maniobrasActivo = false;
     let retencionActivo = false;
     let maniobrasValor = 12.00;
-    let retencionValor = 18.77;
 
     const ordersListContainer = document.getElementById('ordersListContainer');
     const modal = document.getElementById('ordenModal');
@@ -385,17 +360,16 @@
     const cancelModalBtn = document.getElementById('cancelModalBtn');
     const printBtn = document.getElementById('printBtn');
     const nuevaOrdenBtn = document.getElementById('nuevaOrdenBtn');
-    const tasaIvaSpan = document.getElementById('tasaIva');
-    tasaIvaSpan.textContent = (TASA_IVA * 100).toFixed(0);
 
     // Referencias a los nuevos controles
     const enableManiobrasChk = document.getElementById('enableManiobras');
     const maniobrasAmountInput = document.getElementById('maniobrasAmount');
     const enableRetencionChk = document.getElementById('enableRetencion');
-    const retencionAmountInput = document.getElementById('retencionAmount');
+    const retencionMontoSpan = document.getElementById('retencionMontoSpan');
     const maniobrasLine = document.getElementById('maniobrasLine');
     const retencionLine = document.getElementById('retencionLine');
 
+    // Logotipo
     const logoArea = document.getElementById('logoArea');
     let logoData = localStorage.getItem('santana_logo');
     function renderLogo() {
@@ -434,21 +408,37 @@
     }
     renderLogo();
 
-    // Función modificada para incluir maniobras y retención
+    // Función de cálculo: Base = subtotal + maniobras
+    // Luego se resta retención (4% de la base) -> Base2
+    // IVA se calcula sobre Base2
+    // Total = Base2 + IVA
     function calcTotales() {
-      let sub = 0;
+      let subtotalProductos = 0;
       itemsTableBody.querySelectorAll('tr').forEach(fila => {
         const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
         const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
-        sub += c * p;
+        subtotalProductos += c * p;
       });
-      const iva = sub * TASA_IVA;
-      let total = sub + iva;
-      if (maniobrasActivo) total += maniobrasValor;
-      if (retencionActivo) total -= retencionValor;
-      document.getElementById('subtotalVal').textContent = sub.toFixed(2);
+      let base = subtotalProductos;
+      if (maniobrasActivo) base += maniobrasValor;
+      
+      let retencionMonto = 0;
+      if (retencionActivo) {
+        retencionMonto = base * RETENCION_PORCENTAJE;
+      }
+      const baseMenosRetencion = base - retencionMonto;
+      const iva = baseMenosRetencion * TASA_IVA;
+      const total = baseMenosRetencion + iva;
+      
+      document.getElementById('subtotalVal').textContent = subtotalProductos.toFixed(2);
       document.getElementById('ivaVal').textContent = iva.toFixed(2);
       document.getElementById('totalVal').textContent = total.toFixed(2);
+      
+      if (retencionActivo) {
+        retencionMontoSpan.textContent = `($${retencionMonto.toFixed(2)})`;
+      } else {
+        retencionMontoSpan.textContent = '';
+      }
     }
 
     function actualizarSubtotal(fila) {
@@ -470,10 +460,6 @@
       });
       enableRetencionChk.addEventListener('change', (e) => {
         retencionActivo = e.target.checked;
-        calcTotales();
-      });
-      retencionAmountInput.addEventListener('input', (e) => {
-        retencionValor = parseFloat(e.target.value) || 0;
         calcTotales();
       });
     }
@@ -545,18 +531,30 @@
       lineas = [];
       renderLineas();
       editIndex = null;
-      // Resetear las nuevas funciones
       maniobrasActivo = false;
       retencionActivo = false;
       maniobrasValor = 12.00;
-      retencionValor = 18.77;
       enableManiobrasChk.checked = false;
       enableRetencionChk.checked = false;
       maniobrasAmountInput.value = '12.00';
-      retencionAmountInput.value = '18.77';
       calcTotales();
     }
     function obtenerOrden() {
+      // Calcular los valores finales para guardar (coincidentes con calcTotales)
+      let subtotalProductos = 0;
+      itemsTableBody.querySelectorAll('tr').forEach(fila => {
+        const c = parseFloat(fila.querySelector('.cantidad')?.value) || 0;
+        const p = parseFloat(fila.querySelector('.precioUnit')?.value) || 0;
+        subtotalProductos += c * p;
+      });
+      let base = subtotalProductos;
+      if (maniobrasActivo) base += maniobrasValor;
+      let retencionMonto = 0;
+      if (retencionActivo) retencionMonto = base * RETENCION_PORCENTAJE;
+      const baseMenosRetencion = base - retencionMonto;
+      const iva = baseMenosRetencion * TASA_IVA;
+      const total = baseMenosRetencion + iva;
+      
       return {
         poNumber: document.getElementById('poNumber').value.trim(),
         fecha: document.getElementById('poDate').value,
@@ -578,18 +576,14 @@
           document.getElementById('dirEntrega3').value.trim(),
           document.getElementById('dirEntrega4').value.trim()
         ],
-        lineas: lineas.map(l => ({
-          codigo: l.codigo, descripcion: l.descripcion,
-          cantidad: l.cantidad, precioUnit: l.precioUnit
-        })),
-        subtotal: parseFloat(document.getElementById('subtotalVal').textContent) || 0,
-        iva: parseFloat(document.getElementById('ivaVal').textContent) || 0,
-        total: parseFloat(document.getElementById('totalVal').textContent) || 0,
-        // Guardar las nuevas funciones
+        lineas: lineas.map(l => ({ ...l })),
+        subtotal: subtotalProductos,
+        iva: iva,
+        total: total,
         maniobrasActivo: maniobrasActivo,
         maniobrasValor: maniobrasValor,
         retencionActivo: retencionActivo,
-        retencionValor: retencionValor
+        // No guardamos porcentaje porque es fijo
       };
     }
     function cargarEnForm(orden, idx) {
@@ -610,15 +604,12 @@
       document.getElementById('dirEntrega4').value = dir[3] || '';
       lineas = (orden.lineas || []).map(l => ({...l}));
       renderLineas();
-      // Cargar las nuevas funciones
       maniobrasActivo = orden.maniobrasActivo === true;
       retencionActivo = orden.retencionActivo === true;
       maniobrasValor = orden.maniobrasValor !== undefined ? orden.maniobrasValor : 12.00;
-      retencionValor = orden.retencionValor !== undefined ? orden.retencionValor : 18.77;
       enableManiobrasChk.checked = maniobrasActivo;
       enableRetencionChk.checked = retencionActivo;
       maniobrasAmountInput.value = maniobrasValor.toFixed(2);
-      retencionAmountInput.value = retencionValor.toFixed(2);
       calcTotales();
       editIndex = idx;
     }
@@ -645,38 +636,29 @@
       resetForm();
     });
 
-    // Modificación del botón imprimir para ocultar líneas no seleccionadas antes de imprimir
+    // Impresión: ocultar líneas no seleccionadas
     printBtn.addEventListener('click', () => {
-      // Guardar el estado original de visibilidad de cada extra-line
       const lines = [maniobrasLine, retencionLine];
       const originalDisplay = [];
       lines.forEach(line => {
         originalDisplay.push(line.style.display);
-        // Si el checkbox no está marcado, ocultamos la línea completa
         const checkbox = line.querySelector('input[type="checkbox"]');
         if (checkbox && !checkbox.checked) {
           line.style.display = 'none';
         } else {
-          line.style.display = ''; // Asegurar que se muestre
+          line.style.display = '';
         }
       });
-
-      // Ajuste de fuente para la tabla si hay muchas líneas (código original)
       const lineasCount = itemsTableBody.querySelectorAll('tr').length;
       if (lineasCount > 8) {
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '7pt');
       } else if (lineasCount > 5) {
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '8pt');
       }
-
-      // Imprimir
       window.print();
-
-      // Restaurar visibilidad original
       lines.forEach((line, idx) => {
         line.style.display = originalDisplay[idx] || '';
       });
-      // Restaurar tamaño de fuente de la tabla
       document.querySelector('.modal.active .items-table')?.style.removeProperty('font-size');
     });
 
@@ -691,6 +673,9 @@
         return;
       }
       ordenes.forEach((o, idx) => {
+        // Calcular retención para mostrar (4% sobre base)
+        const base = (o.subtotal || 0) + (o.maniobrasActivo ? (o.maniobrasValor || 0) : 0);
+        const retencionMostrar = o.retencionActivo ? base * 0.04 : 0;
         const div = document.createElement('div');
         div.className = 'order-item';
         div.innerHTML = `
@@ -707,7 +692,7 @@
                 <div class="detail-block"><label>Facturación</label><span>${o.facturacion?.empresa||''} / ${o.facturacion?.rfc||''}</span></div>
                 <div class="detail-block"><label>Persona que recibe</label><span>${o.personaRecibe||'-'}</span></div>
                 ${o.maniobrasActivo ? `<div class="detail-block"><label>Maniobras</label><span>$${o.maniobrasValor?.toFixed(2) || '0.00'}</span></div>` : ''}
-                ${o.retencionActivo ? `<div class="detail-block"><label>Retención</label><span>$${o.retencionValor?.toFixed(2) || '0.00'}</span></div>` : ''}
+                ${o.retencionActivo ? `<div class="detail-block"><label>Retención (4%)</label><span>$${retencionMostrar.toFixed(2)}</span></div>` : ''}
               </div>
               <div>
                 <div class="detail-block"><label>Comentarios</label><span>${o.comentarios||'-'}</span></div>
