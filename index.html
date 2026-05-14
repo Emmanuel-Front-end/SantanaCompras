@@ -377,7 +377,7 @@
     const retencionLine = document.getElementById('retencionLine');
     const ivaLine = document.getElementById('ivaLine');
 
-    // Logotipo
+    // ── LOGO ─────────────────────────────────────
     const logoArea = document.getElementById('logoArea');
     let logoData = localStorage.getItem('santana_logo');
     function renderLogo() {
@@ -416,6 +416,7 @@
     }
     renderLogo();
 
+    // ── CÁLCULOS ─────────────────────────────────
     function calcTotales() {
       let subtotalProductos = 0;
       itemsTableBody.querySelectorAll('tr').forEach(fila => {
@@ -425,12 +426,9 @@
       });
       let base = subtotalProductos;
       if (maniobrasActivo) base += maniobrasValor;
-      
       const iva = base * TASA_IVA;
       let retencionMonto = 0;
-      if (retencionActivo) {
-        retencionMonto = base * RETENCION_PORCENTAJE;
-      }
+      if (retencionActivo) retencionMonto = base * RETENCION_PORCENTAJE;
       const total = base + iva - retencionMonto;
       
       document.getElementById('subtotalVal').textContent = subtotalProductos.toFixed(2);
@@ -442,7 +440,6 @@
       } else {
         retencionMontoSpan.textContent = '';
       }
-      
       ivaLine.style.display = (base === 0) ? 'none' : '';
     }
 
@@ -469,6 +466,7 @@
     }
     bindExtraEvents();
 
+    // ── PERSISTENCIA ────────────────────────────
     function parsePO(po) {
       const p = po.split('-');
       if(p.length === 2) return [parseInt(p[0])||0, parseInt(p[1])||0];
@@ -482,11 +480,9 @@
         return yB - yA || nB - nA;
       });
     }
-    function persistir() {
-      ordenar();
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(ordenes));
-    }
+    function persistir() { ordenar(); localStorage.setItem(STORAGE_KEY, JSON.stringify(ordenes)); }
 
+    // ── LÍNEAS DE PRODUCTOS ─────────────────────
     itemsTableBody.addEventListener('input', e => {
       const inp = e.target;
       if (!inp.classList.contains('cantidad') && !inp.classList.contains('precioUnit') &&
@@ -527,6 +523,7 @@
       renderLineas();
     });
 
+    // ── FORMULARIO ──────────────────────────────
     function resetForm() {
       ['poNumber','poDate','provNombre','provDireccion','provContacto',
        'factEmpresa','factDireccion','factRFC','personaRecibe','comentarios',
@@ -556,7 +553,6 @@
       let retencionMonto = 0;
       if (retencionActivo) retencionMonto = base * RETENCION_PORCENTAJE;
       const total = base + iva - retencionMonto;
-      
       return {
         poNumber: document.getElementById('poNumber').value.trim(),
         fecha: document.getElementById('poDate').value,
@@ -617,10 +613,7 @@
 
     saveFormBtn.addEventListener('click', () => {
       const orden = obtenerOrden();
-      if (!orden.poNumber || !orden.fecha) {
-        alert('Número de orden y fecha son obligatorios.');
-        return;
-      }
+      if (!orden.poNumber || !orden.fecha) { alert('Número de orden y fecha son obligatorios.'); return; }
       if (editIndex !== null) ordenes[editIndex] = orden;
       else ordenes.push(orden);
       persistir();
@@ -628,19 +621,13 @@
       modal.classList.remove('active');
       resetForm();
     });
-    nuevaOrdenBtn.addEventListener('click', () => {
-      resetForm();
-      modal.classList.add('active');
-    });
-    cancelModalBtn.addEventListener('click', () => {
-      modal.classList.remove('active');
-      resetForm();
-    });
+    nuevaOrdenBtn.addEventListener('click', () => { resetForm(); modal.classList.add('active'); });
+    cancelModalBtn.addEventListener('click', () => { modal.classList.remove('active'); resetForm(); });
 
-    // 🔁 Función que convierte inputs de la tabla en texto antes de imprimir y los restaura después
+    // ── IMPRESIÓN ───────────────────────────────
     function prepararImpresion() {
       const filas = itemsTableBody.querySelectorAll('tr');
-      const originalData = []; // guardamos los inputs para restaurar
+      const originalData = [];
       filas.forEach((fila, i) => {
         const inputs = fila.querySelectorAll('input');
         const dataFila = [];
@@ -652,7 +639,6 @@
             step: input.step,
             datasetIdx: input.dataset.idx
           });
-          // Reemplazar el input por un span con el valor
           const span = document.createElement('span');
           span.className = 'print-text';
           span.textContent = input.value;
@@ -662,7 +648,6 @@
       });
       return originalData;
     }
-
     function restaurarImpresion(originalData) {
       const filas = itemsTableBody.querySelectorAll('tr');
       filas.forEach((fila, i) => {
@@ -679,24 +664,49 @@
           span.replaceWith(input);
         });
       });
-      // Re-vincular eventos de input si es necesario
     }
 
-    printBtn.addEventListener('click', () => {
+    // Oculta líneas de maniobras/retención si no están marcadas, retorna los display originales
+    function ocultarLineasExtraParaImpresion() {
       const lines = [maniobrasLine, retencionLine];
-      const originalDisplay = [];
+      const original = lines.map(line => line.style.display);
       lines.forEach(line => {
-        originalDisplay.push(line.style.display);
-        const checkbox = line.querySelector('input[type="checkbox"]');
-        if (checkbox && !checkbox.checked) {
-          line.style.display = 'none';
-        } else {
-          line.style.display = '';
-        }
+        const chk = line.querySelector('input[type="checkbox"]');
+        if (chk && !chk.checked) line.style.display = 'none';
+        else line.style.display = '';
       });
+      return original;
+    }
+    function restaurarLineasExtra(original) {
+      const lines = [maniobrasLine, retencionLine];
+      lines.forEach((line, i) => { line.style.display = original[i] || ''; });
+    }
 
-      const originalData = prepararImpresion(); // convertir inputs a texto
+    let printingFromList = false;
+    let originalTableData = null;
+    let originalLineDisplays = null;
 
+    // Después de imprimir, restaurar todo y cerrar modal si venía de la lista
+    window.addEventListener('afterprint', () => {
+      if (printingFromList) {
+        if (originalTableData) {
+          restaurarImpresion(originalTableData);
+          originalTableData = null;
+        }
+        if (originalLineDisplays) {
+          restaurarLineasExtra(originalLineDisplays);
+          originalLineDisplays = null;
+        }
+        modal.classList.remove('active');
+        resetForm();
+        printingFromList = false;
+      }
+    });
+
+    // Impresión desde el modal (botón Imprimir)
+    printBtn.addEventListener('click', () => {
+      originalLineDisplays = ocultarLineasExtraParaImpresion();
+      const originalData = prepararImpresion();
       const lineasCount = itemsTableBody.querySelectorAll('tr').length;
       if (lineasCount > 8) {
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '7pt');
@@ -704,15 +714,28 @@
         document.querySelector('.modal.active .items-table')?.style.setProperty('font-size', '8pt');
       }
       window.print();
-      
-      // Restaurar todo
       restaurarImpresion(originalData);
-      lines.forEach((line, idx) => {
-        line.style.display = originalDisplay[idx] || '';
-      });
+      if (originalLineDisplays) {
+        restaurarLineasExtra(originalLineDisplays);
+        originalLineDisplays = null;
+      }
       document.querySelector('.modal.active .items-table')?.style.removeProperty('font-size');
     });
 
+    // Impresión directa desde la lista
+    function printOrder(idx) {
+      printingFromList = true;
+      resetForm();
+      cargarEnForm(ordenes[idx], idx);
+      modal.classList.add('active');
+      setTimeout(() => {
+        originalLineDisplays = ocultarLineasExtraParaImpresion();
+        originalTableData = prepararImpresion();
+        window.print();
+      }, 150);
+    }
+
+    // ── LISTA DE ÓRDENES ────────────────────────
     function renderLista() {
       ordenar();
       ordersListContainer.innerHTML = '';
@@ -750,6 +773,7 @@
               </div>
             </div>
             <div class="detail-actions">
+              <button class="btn btn-outline btn-sm print-order-btn" data-idx="${idx}">🖨️ Imprimir</button>
               <button class="btn btn-outline btn-sm edit-btn" data-idx="${idx}">✏️ Editar</button>
               <button class="btn btn-danger btn-sm delete-btn" data-idx="${idx}">🗑️ Eliminar</button>
             </div>
@@ -758,6 +782,14 @@
         const summary = div.querySelector('.order-summary');
         summary.addEventListener('click', () => { div.classList.toggle('open'); });
         ordersListContainer.appendChild(div);
+      });
+
+      document.querySelectorAll('.print-order-btn').forEach(b => {
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const i = parseInt(b.dataset.idx);
+          printOrder(i);
+        });
       });
       document.querySelectorAll('.edit-btn').forEach(b => {
         b.addEventListener('click', (e) => {
@@ -779,6 +811,7 @@
           }
         });
       });
+
       document.getElementById('kpiTotal').textContent = ordenes.length;
       document.getElementById('kpiMonto').textContent = '$' + ordenes.reduce((s,o) => s + (o.total||0), 0).toFixed(2);
       document.getElementById('kpiUltima').textContent = ordenes.length ? ordenes[0]?.poNumber : '-';
