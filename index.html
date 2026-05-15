@@ -305,7 +305,13 @@
 
     <div class="totals">
       <div>SUB-TOTAL: $<span id="subtotalVal">0.00</span></div>
-      <div id="ivaLine">IVA (16%): $<span id="ivaVal">0.00</span></div>
+      
+      <!-- Nuevo: Checkbox para activar/desactivar IVA -->
+      <div class="extra-line" id="ivaToggleLine">
+        <input type="checkbox" id="enableIVA" checked>
+        <span class="extra-label">Aplicar IVA (16%):</span>
+        <span id="ivaVal" style="min-width:80px; text-align:right;">$0.00</span>
+      </div>
       
       <div class="extra-line" id="maniobrasLine">
         <input type="checkbox" id="enableManiobras">
@@ -358,6 +364,7 @@
 
     let maniobrasActivo = false;
     let retencionActivo = false;
+    let ivaActivo = true;        // Nuevo: control del IVA
     let maniobrasValor = 12.00;
 
     const ordersListContainer = document.getElementById('ordersListContainer');
@@ -373,9 +380,11 @@
     const maniobrasAmountInput = document.getElementById('maniobrasAmount');
     const enableRetencionChk = document.getElementById('enableRetencion');
     const retencionMontoSpan = document.getElementById('retencionMontoSpan');
+    const enableIvaChk = document.getElementById('enableIVA');
+    const ivaValSpan = document.getElementById('ivaVal');
     const maniobrasLine = document.getElementById('maniobrasLine');
     const retencionLine = document.getElementById('retencionLine');
-    const ivaLine = document.getElementById('ivaLine');
+    // Nota: ivaLine ya no existe; usamos ivaValSpan para mostrar el monto.
 
     // ── LOGO ─────────────────────────────────────
     const logoArea = document.getElementById('logoArea');
@@ -416,7 +425,7 @@
     }
     renderLogo();
 
-    // ── CÁLCULOS ─────────────────────────────────
+    // ── CÁLCULOS (ahora con IVA opcional) ──────────────────
     function calcTotales() {
       let subtotalProductos = 0;
       itemsTableBody.querySelectorAll('tr').forEach(fila => {
@@ -426,13 +435,19 @@
       });
       let base = subtotalProductos;
       if (maniobrasActivo) base += maniobrasValor;
-      const iva = base * TASA_IVA;
+      
+      // IVA depende del checkbox
+      let iva = 0;
+      if (ivaActivo) {
+        iva = base * TASA_IVA;
+      }
+      
       let retencionMonto = 0;
       if (retencionActivo) retencionMonto = base * RETENCION_PORCENTAJE;
       const total = base + iva - retencionMonto;
       
       document.getElementById('subtotalVal').textContent = subtotalProductos.toFixed(2);
-      document.getElementById('ivaVal').textContent = iva.toFixed(2);
+      ivaValSpan.textContent = `$${iva.toFixed(2)}`;
       document.getElementById('totalVal').textContent = total.toFixed(2);
       
       if (retencionActivo) {
@@ -440,7 +455,6 @@
       } else {
         retencionMontoSpan.textContent = '';
       }
-      ivaLine.style.display = (base === 0) ? 'none' : '';
     }
 
     function actualizarSubtotal(fila) {
@@ -461,6 +475,10 @@
       });
       enableRetencionChk.addEventListener('change', (e) => {
         retencionActivo = e.target.checked;
+        calcTotales();
+      });
+      enableIvaChk.addEventListener('change', (e) => {
+        ivaActivo = e.target.checked;
         calcTotales();
       });
     }
@@ -507,8 +525,8 @@
       lineas.forEach((l, i) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><input type="text" class="codigo" value="${l.codigo||''}" data-idx="${i}"></td>
-          <td><input type="text" class="descripcion" value="${l.descripcion||''}" data-idx="${i}"></td>
+          <td><input type="text" class="codigo" value="${escapeHtml(l.codigo||'')}" data-idx="${i}"></td>
+          <td><input type="text" class="descripcion" value="${escapeHtml(l.descripcion||'')}" data-idx="${i}"></td>
           <td><input type="number" step="any" class="cantidad" value="${l.cantidad||''}" data-idx="${i}"></td>
           <td><input type="number" step="any" class="precioUnit" value="${l.precioUnit||''}" data-idx="${i}"></td>
           <td class="subtotal-cell">${((l.cantidad||0)*(l.precioUnit||0)).toFixed(2)}</td>
@@ -534,9 +552,11 @@
       editIndex = null;
       maniobrasActivo = false;
       retencionActivo = false;
+      ivaActivo = true;           // por defecto activado
       maniobrasValor = 12.00;
       enableManiobrasChk.checked = false;
       enableRetencionChk.checked = false;
+      enableIvaChk.checked = true;
       maniobrasAmountInput.value = '12.00';
       calcTotales();
     }
@@ -549,7 +569,7 @@
       });
       let base = subtotalProductos;
       if (maniobrasActivo) base += maniobrasValor;
-      const iva = base * TASA_IVA;
+      const iva = ivaActivo ? base * TASA_IVA : 0;
       let retencionMonto = 0;
       if (retencionActivo) retencionMonto = base * RETENCION_PORCENTAJE;
       const total = base + iva - retencionMonto;
@@ -581,6 +601,7 @@
         maniobrasActivo: maniobrasActivo,
         maniobrasValor: maniobrasValor,
         retencionActivo: retencionActivo,
+        ivaActivo: ivaActivo          // guardamos el estado del IVA
       };
     }
     function cargarEnForm(orden, idx) {
@@ -603,9 +624,11 @@
       renderLineas();
       maniobrasActivo = orden.maniobrasActivo === true;
       retencionActivo = orden.retencionActivo === true;
+      ivaActivo = orden.ivaActivo !== undefined ? orden.ivaActivo : true; // compatibilidad hacia atrás
       maniobrasValor = orden.maniobrasValor !== undefined ? orden.maniobrasValor : 12.00;
       enableManiobrasChk.checked = maniobrasActivo;
       enableRetencionChk.checked = retencionActivo;
+      enableIvaChk.checked = ivaActivo;
       maniobrasAmountInput.value = maniobrasValor.toFixed(2);
       calcTotales();
       editIndex = idx;
@@ -624,7 +647,7 @@
     nuevaOrdenBtn.addEventListener('click', () => { resetForm(); modal.classList.add('active'); });
     cancelModalBtn.addEventListener('click', () => { modal.classList.remove('active'); resetForm(); });
 
-    // ── IMPRESIÓN ───────────────────────────────
+    // ── IMPRESIÓN (adaptada para IVA) ───────────────────────────────
     function prepararImpresion() {
       const filas = itemsTableBody.querySelectorAll('tr');
       const originalData = [];
@@ -667,18 +690,27 @@
     }
 
     function ocultarLineasExtraParaImpresion() {
-      const lines = [maniobrasLine, retencionLine];
-      const original = lines.map(line => line.style.display);
+      // Consideramos también la línea del IVA
+      const lines = [document.getElementById('ivaToggleLine'), maniobrasLine, retencionLine];
+      const original = lines.map(line => line ? line.style.display : '');
       lines.forEach(line => {
-        const chk = line.querySelector('input[type="checkbox"]');
-        if (chk && !chk.checked) line.style.display = 'none';
-        else line.style.display = '';
+        if (!line) return;
+        // Para la línea del IVA, si el checkbox no está marcado, la ocultamos
+        if (line.id === 'ivaToggleLine') {
+          const chk = enableIvaChk;
+          if (chk && !chk.checked) line.style.display = 'none';
+          else line.style.display = '';
+        } else {
+          const chk = line.querySelector('input[type="checkbox"]');
+          if (chk && !chk.checked) line.style.display = 'none';
+          else line.style.display = '';
+        }
       });
       return original;
     }
     function restaurarLineasExtra(original) {
-      const lines = [maniobrasLine, retencionLine];
-      lines.forEach((line, i) => { line.style.display = original[i] || ''; });
+      const lines = [document.getElementById('ivaToggleLine'), maniobrasLine, retencionLine];
+      lines.forEach((line, i) => { if (line) line.style.display = original[i] || ''; });
     }
 
     let printingFromList = false;
@@ -731,7 +763,7 @@
       }, 150);
     }
 
-    // ── LISTA DE ÓRDENES ────────────────────────
+    // ── LISTA DE ÓRDENES (muestra el IVA en detalles, opcional) ─────
     function renderLista() {
       ordenar();
       ordersListContainer.innerHTML = '';
@@ -749,23 +781,24 @@
         div.className = 'order-item';
         div.innerHTML = `
           <div class="order-summary">
-            <span class="po">${o.poNumber}</span>
-            <span class="proveedor">${o.proveedor?.nombre || 'Sin proveedor'}</span>
-            <span class="fecha">${o.fecha}</span>
+            <span class="po">${escapeHtml(o.poNumber)}</span>
+            <span class="proveedor">${escapeHtml(o.proveedor?.nombre || 'Sin proveedor')}</span>
+            <span class="fecha">${escapeHtml(o.fecha)}</span>
             <span class="total">$${(o.total||0).toFixed(2)}</span>
             <span class="icono">▼</span>
           </div>
           <div class="order-details">
             <div class="detail-grid">
               <div>
-                <div class="detail-block"><label>Facturación</label><span>${o.facturacion?.empresa||''} / ${o.facturacion?.rfc||''}</span></div>
-                <div class="detail-block"><label>Persona que recibe</label><span>${o.personaRecibe||'-'}</span></div>
+                <div class="detail-block"><label>Facturación</label><span>${escapeHtml(o.facturacion?.empresa||'')} / ${escapeHtml(o.facturacion?.rfc||'')}</span></div>
+                <div class="detail-block"><label>Persona que recibe</label><span>${escapeHtml(o.personaRecibe||'-')}</span></div>
                 ${o.maniobrasActivo ? `<div class="detail-block"><label>Maniobras</label><span>$${o.maniobrasValor?.toFixed(2) || '0.00'}</span></div>` : ''}
                 ${o.retencionActivo ? `<div class="detail-block"><label>Retención (4%)</label><span>$${retencionMostrar.toFixed(2)}</span></div>` : ''}
+                <div class="detail-block"><label>IVA</label><span>${o.ivaActivo !== false ? 'Aplicado' : 'No aplicado'}</span></div>
               </div>
               <div>
-                <div class="detail-block"><label>Comentarios</label><span>${o.comentarios||'-'}</span></div>
-                <div class="detail-block"><label>Dirección de entrega</label><span>${(o.dirEntrega||[]).filter(l=>l).join(', ')||'-'}</span></div>
+                <div class="detail-block"><label>Comentarios</label><span>${escapeHtml(o.comentarios||'-')}</span></div>
+                <div class="detail-block"><label>Dirección de entrega</label><span>${escapeHtml((o.dirEntrega||[]).filter(l=>l).join(', ')||'-')}</span></div>
               </div>
             </div>
             <div class="detail-actions">
@@ -811,6 +844,16 @@
       document.getElementById('kpiTotal').textContent = ordenes.length;
       document.getElementById('kpiMonto').textContent = '$' + ordenes.reduce((s,o) => s + (o.total||0), 0).toFixed(2);
       document.getElementById('kpiUltima').textContent = ordenes.length ? ordenes[0]?.poNumber : '-';
+    }
+
+    function escapeHtml(str) {
+      if (!str) return '';
+      return str.replace(/[&<>]/g, function(m) {
+        if (m === '&') return '&amp;';
+        if (m === '<') return '&lt;';
+        if (m === '>') return '&gt;';
+        return m;
+      });
     }
 
     ordenar();
