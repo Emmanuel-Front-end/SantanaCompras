@@ -155,6 +155,7 @@
     .auth-field .firma-line { border-bottom: 1px solid #1e3c34; width: 100%; }
     .modal-actions { display: flex; justify-content: flex-end; gap: 0.8rem; margin-top: 1.5rem; }
 
+    /* ========== MEJORA: LOGOTIPO MÁS GRANDE EN IMPRESIÓN ========== */
     @media print {
       body { background: white; padding: 0; }
       .app-container { max-width: 100%; margin: 0; }
@@ -172,7 +173,15 @@
       .header .btn { display: none !important; }
       .logo-area { margin: 0 !important; }
       .logo-placeholder { display: none !important; }
-      .logo-img { height: 0.8cm !important; background: white; }
+      
+      /* LOGO MÁS GRANDE EN PAPEL: antes 0.8cm, ahora 1.5cm para que se vea bien */
+      .logo-img { 
+        height: 1.5cm !important; 
+        width: auto !important; 
+        background: white;
+        max-height: 2cm;
+      }
+      
       .modal { display: none !important; }
       .modal.active {
         display: block !important; position: static; background: none;
@@ -384,7 +393,6 @@
     const ivaValSpan = document.getElementById('ivaVal');
     const maniobrasLine = document.getElementById('maniobrasLine');
     const retencionLine = document.getElementById('retencionLine');
-    // Nota: ivaLine ya no existe; usamos ivaValSpan para mostrar el monto.
 
     // ── LOGO ─────────────────────────────────────
     const logoArea = document.getElementById('logoArea');
@@ -624,7 +632,7 @@
       renderLineas();
       maniobrasActivo = orden.maniobrasActivo === true;
       retencionActivo = orden.retencionActivo === true;
-      ivaActivo = orden.ivaActivo !== undefined ? orden.ivaActivo : true; // compatibilidad hacia atrás
+      ivaActivo = orden.ivaActivo !== undefined ? orden.ivaActivo : true;
       maniobrasValor = orden.maniobrasValor !== undefined ? orden.maniobrasValor : 12.00;
       enableManiobrasChk.checked = maniobrasActivo;
       enableRetencionChk.checked = retencionActivo;
@@ -690,12 +698,10 @@
     }
 
     function ocultarLineasExtraParaImpresion() {
-      // Consideramos también la línea del IVA
       const lines = [document.getElementById('ivaToggleLine'), maniobrasLine, retencionLine];
       const original = lines.map(line => line ? line.style.display : '');
       lines.forEach(line => {
         if (!line) return;
-        // Para la línea del IVA, si el checkbox no está marcado, la ocultamos
         if (line.id === 'ivaToggleLine') {
           const chk = enableIvaChk;
           if (chk && !chk.checked) line.style.display = 'none';
